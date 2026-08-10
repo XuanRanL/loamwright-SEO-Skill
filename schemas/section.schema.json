@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/section.schema.json",
+  "title": "Section Draft Output",
+  "description": "Output of one section-drafter subagent. Stored at memory/workspace/{task_id}/sections/{index}.json. Validated by claude-md hard constraints.",
+  "type": "object",
+  "required": ["section_index", "h2", "markdown", "word_count", "self_check"],
+  "properties": {
+    "section_index": {"type": "integer", "minimum": 0},
+    "h2": {"type": "string"},
+    "markdown": {
+      "type": "string",
+      "minLength": 100,
+      "description": "Section body in markdown. May contain [claim:cN_S] and [citation-capsule:hN] markers."
+    },
+    "citation_capsule": {
+      "type": "object",
+      "description": "Per-H2 AI-quotable 40-60 word self-contained block (Princeton GEO requirement)",
+      "required": ["text", "word_count"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 200,
+          "maxLength": 500
+        },
+        "word_count": {
+          "type": "integer",
+          "minimum": 35,
+          "maximum": 70
+        }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "needs_source"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^c[0-9]+_[0-9]+$",
+            "description": "Format: cN_S where N=section_index, S=sequence within section"
+          },
+          "text": {"type": "string"},
+          "needs_source": {"type": "boolean"},
+          "hint_query": {"type": "string", "description": "Search query hint for fact-checker"}
+        }
+      }
+    },
+    "information_gain_markers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["[ORIGINAL DATA]", "[PERSONAL EXPERIENCE]", "[UNIQUE INSIGHT]"]
+      },
+      "description": "Section-level markers; full article needs ≥2 total across all sections"
+    },
+    "answer_block": {
+      "type": ["object", "null"],
+      "description": "Featured Snippet target block (only if outline.sections[].is_featured_snippet_target = true)",
+      "properties": {
+        "text": {"type": "string", "minLength": 200, "maxLength": 500},
+        "word_count": {"type": "integer", "minimum": 40, "maximum": 60},
+        "format": {"enum": ["paragraph", "list", "table"]},
+        "data_points": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "word_count": {"type": "integer", "minimum": 100},
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["placement_line", "columns"],
+        "properties": {
+          "placement_line": {"type": "integer", "minimum": 0},
+          "columns": {"type": "array", "items": {"type": "string"}, "minItems": 2},
+          "rows": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}
+        }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["banned_words_found", "ai_tells_found", "em_dash_count", "keyword_density_estimate"],
+      "properties": {
+        "banned_words_found": {"type": "boolean"},
+        "banned_words_list": {"type": "array", "items": {"type": "string"}},
+        "ai_tells_found": {"type": "boolean"},
+        "ai_tells_list": {"type": "array", "items": {"type": "string"}},
+        "em_dash_count": {"type": "integer", "minimum": 0, "maximum": 0, "description": "MUST be 0"},
+        "keyword_density_estimate": {"type": "number", "minimum": 0, "maximum": 0.05},
+        "word_count_within_budget": {"type": "boolean"}
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "agent_model": {"type": "string", "default": "claude-opus-4-7"}
+  }
+}

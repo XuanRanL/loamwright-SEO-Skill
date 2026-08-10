@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Virtual environments
+.venv/
+venv/
+
+# Runtime data (created per task / per project — never plugin source)
+workspace/
+memory/
+projects/*/
+!projects/README.md
+
+# User secrets (NEVER commit)
+*.key
+*.pem
+.env
+.env.local
+config.local.yaml
+
+# Build outputs
+/dist/
+/build/
+
+# Logs / OS / editor
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Export tooling bookkeeping
+.opensource-export-marker

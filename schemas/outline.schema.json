@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/outline.schema.json",
+  "title": "Article Outline",
+  "description": "Output of outline-architect. Stored at memory/workspace/{task_id}/outline.json. Word budgets must sum to ≈word_count_target ±5%.",
+  "type": "object",
+  "required": ["abstract_seed", "takeaways_seeds", "sections", "faq"],
+  "properties": {
+    "abstract_seed": {
+      "type": "string",
+      "description": "One-sentence framing for the Abstract section"
+    },
+    "tldr_seed": {
+      "type": "string",
+      "description": "Pre-Abstract TL;DR block content (≤540w grounding zone)"
+    },
+    "takeaways_seeds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 4,
+      "maxItems": 7,
+      "description": "Key Takeaways list items (4-7, each ≤20 words)"
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "required": ["index", "h2", "word_budget", "section_intent"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 0},
+          "h2": {"type": "string"},
+          "h3s": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "word_budget": {
+            "type": "integer",
+            "minimum": 150,
+            "maximum": 2500,
+            "description": "Target word count for this section. Sum of all sections must = word_count_target ±5%"
+          },
+          "needs_table": {"type": "boolean", "default": false},
+          "image_slot": {"type": "boolean", "default": false},
+          "youtube_slot": {"type": "boolean", "default": false},
+          "section_intent": {
+            "type": "string",
+            "description": "Why this section exists (search intent / funnel stage / E-E-A-T signal)"
+          },
+          "primary_keyword_density_target": {
+            "type": "number",
+            "minimum": 0.005,
+            "maximum": 0.013,
+            "default": 0.01
+          },
+          "is_featured_snippet_target": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, this section gets the most answer-first extractive 40-60w capsule. CONSUMED (since v3.35) by the citation-capsule-builder stage dispatch — the retired featured-snippet-optimizer merged into it (FS and AIO select the same extraction shape; Ahrefs 2025: FS 83% replaced by AIO). See references/seo/serp-feature-value-2026.md."
+          },
+          "snippet_format": {
+            "type": "string",
+            "enum": ["paragraph", "list", "table"],
+            "deprecated": true,
+            "description": "DEPRECATED v3.35: was meant for the never-wired featured-snippet-optimizer; consumed by nothing. Tolerated on legacy outlines; do not emit."
+          },
+          "citation_capsule_required": {"type": "boolean", "default": true},
+          "design_components": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["comparison_table", "stat_grid", "quotation", "tldr_box",
+                       "checklist", "glossary", "callout", "pull_quote"]
+            },
+            "default": [],
+            "description": "Visual design components the writer should realize in this section, assigned by outline-architect per the article format (see references/style/visual-design-components.md). A comparison_table entry should be paired with needs_table:true."
+          }
+        }
+      }
+    },
+    "faq": {
+      "type": "object",
+      "required": ["count", "seed_questions"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 5, "maximum": 15},
+        "seed_questions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "FAQ questions; ≥60% must come from research.paa per v3.2 spec"
+        },
+        "paa_alignment_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of FAQ questions derived from research.paa"
+        }
+      }
+    },
+    "cta_placement": {
+      "type": "object",
+      "deprecated": true,
+      "description": "DEPRECATED v3.34 (2026-07-04): was produced by outline-architect but consumed by NOTHING (Rule-6 orphan data). CTA placement is now deterministic — scripts/optimize/cta_injector.py reads business-context.json :: cta (project-level config), not the per-article outline. Tolerated on legacy outlines; do not emit for new ones.",
+      "properties": {
+        "primary_position": {
+          "type": "string",
+          "enum": ["after-section-2", "after-section-3", "middle-of-article", "before-conclusion"]
+        },
+        "cta_text": {"type": "string"},
+        "secondary_in_conclusion": {"type": "boolean", "default": true}
+      }
+    },
+    "total_word_budget": {
+      "type": "integer",
+      "description": "Sum of all section word_budgets (sanity check)"
+    },
+    "expected_h2_count": {"type": "integer"},
+    "expected_table_count": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "≥2 tables required, at least 1 in front 50%"
+    },
+    "expected_image_count": {"type": "integer", "minimum": 0, "maximum": 4},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

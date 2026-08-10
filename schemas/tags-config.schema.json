@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://xuanran-seo.dev/schemas/tags-config.schema.json",
+  "title": "WordPress Tags Config",
+  "description": "Source-of-truth config for a project's WordPress blog tag taxonomy. Applied by scripts/wordpress/setup_tags.py AND consulted by scripts/wordpress/wp_publisher.py on every article publish (tag get-or-create). Robots policy is per-project (policy.default_robots); niche sites default to index-by-default with curated descriptions.",
+  "type": "object",
+  "required": ["site_slug", "version", "policy"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "site_slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"},
+    "version": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "note": {"type": "string"},
+    "policy": {"$ref": "#/definitions/policy"},
+    "axes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "strategic_tags": {
+      "type": "array",
+      "description": "Tags that earn full SEO treatment with rank_math_robots=['index']. Promotion criteria from policy.promote_to_index_criteria must be met.",
+      "items": {"$ref": "#/definitions/strategic_tag"}
+    },
+    "baseline_tags": {
+      "type": "array",
+      "description": "Tags that get name + slug + axis classification + curated description. Indexed by default per policy (project-charlie pattern). Brand mentions, technical synonyms, axis-fill tags. Differs from strategic_tags by editorial investment, not capability: baseline entries MAY carry curated rank_math_title / rank_math_description / rank_math_focus_keyword (loamwright 2026-07-06 pattern); when absent, the RankMath global tag template applies.",
+      "items": {"$ref": "#/definitions/baseline_tag"}
+    },
+    "delete_tags": {
+      "type": "array",
+      "description": "Tags to remove from the live site. Setup script deletes after migrating any posts to the strategic-tag merge target.",
+      "items": {
+        "type": "object",
+        "required": ["slug", "reason"],
+        "properties": {
+          "slug": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "policy": {
+      "type": "object",
+      "required": ["default_robots", "auto_create_on_article_publish"],
+      "properties": {
+        "default_robots": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["index", "noindex", "nofollow"]}
+        },
+        "default_robots_rationale": {"type": "string"},
+        "promote_to_index_criteria": {
+          "type": "object",
+          "properties": {
+            "min_post_count": {"type": "integer"},
+            "requires_unique_description": {"type": "boolean"},
+            "requires_axis_classification": {"type": "boolean"},
+            "must_not_duplicate_category": {"type": "boolean"}
+          }
+        },
+        "auto_create_on_article_publish": {"type": "boolean"},
+        "auto_create_default_meta": {
+          "type": "object",
+          "properties": {
+            "rank_math_robots": {"type": "array"},
+            "description_template": {"type": ["string", "null"], "description": "Template for auto-generated descriptions. {name} interpolates the tag name. DELIBERATELY null in canonical configs (post-2026-05-23) — templated descriptions are the hidden anti-pattern; see feedback_tag_description_must_be_tag_centric."},
+            "description_template_note": {"type": "string"}
+          }
+        }
+      }
+    },
+    "strategic_tag": {
+      "type": "object",
+      "required": ["slug", "name", "axis", "description", "rank_math_title", "rank_math_description", "rank_math_focus_keyword", "rank_math_robots"],
+      "properties": {
+        "slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"},
+        "name": {"type": "string"},
+        "axis": {"type": "string"},
+        "description": {"type": "string", "minLength": 50},
+        "rank_math_title": {"type": "string", "minLength": 10, "maxLength": 80},
+        "rank_math_description": {"type": "string", "minLength": 50, "maxLength": 165},
+        "rank_math_focus_keyword": {"type": "string"},
+        "rank_math_robots": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["index", "noindex", "nofollow"]}
+        },
+        "rank_math_twitter_card_type": {"type": "string"},
+        "rank_math_facebook_title": {"type": "string"},
+        "rank_math_facebook_description": {"type": "string"},
+        "merge_from_slugs": {
+          "type": "array",
+          "description": "Legacy tag slugs to merge INTO this tag. Setup script: re-tags posts from each legacy slug to this slug, then deletes the legacy tag.",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "baseline_tag": {
+      "type": "object",
+      "required": ["slug", "name", "description"],
+      "properties": {
+        "slug": {"type": "string"},
+        "name": {"type": "string"},
+        "axis": {"type": "string"},
+        "description": {
+          "type": "string",
+          "description": "Axis-aware unique description, 30-60 words. Should reference concrete products, specifications, or topics relevant to this tag — NOT a 'Articles tagged X on Site' tautology template. Falls back to template only for unknown organic tags resolved through the resolver, never for baseline_tags entries.",
+          "minLength": 80
+        },
+        "rank_math_robots": {
+          "type": "array",
+          "description": "Defaults to policy.default_robots if omitted. Set explicitly per-tag if it should diverge from project policy.",
+          "items": {"type": "string", "enum": ["index", "noindex", "nofollow"]}
+        },
+        "rank_math_title": {"type": "string", "minLength": 10, "maxLength": 80, "description": "Optional curated SERP title. Passed through by setup_tags.py and tag_seo_resolver when present."},
+        "rank_math_description": {"type": "string", "minLength": 50, "maxLength": 165},
+        "rank_math_focus_keyword": {"type": "string"},
+        "rank_math_twitter_card_type": {"type": "string"},
+        "merge_from_slugs": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

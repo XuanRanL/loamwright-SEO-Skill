@@ -1,0 +1,8 @@
+{
+  "_doc": "Skill-level format->intrinsic required sections. Resolution order in mandatory_sections_check: project business-context.json::mandatory_sections.by_format[format_id] overrides this; this overrides the project's legacy sections[]. h2_pattern is matched case-insensitively against draft H2 text.",
+  "weekly-digest": [
+    {"id": "tldr", "h2_pattern": "^(TL;?DR|This Week.*)$", "position": "first_body_h2"},
+    {"id": "faq", "h2_pattern": "^(Frequently Asked Questions|FAQ)$", "position": "before_conclusion"},
+    {"id": "references", "h2_pattern": "^References$", "h2_id": "references", "position": "last_h2"}
+  ]
+}

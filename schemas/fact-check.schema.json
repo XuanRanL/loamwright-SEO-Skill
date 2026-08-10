@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/fact-check.schema.json",
+  "title": "Fact-Check Verdict Artifact",
+  "description": "Output of the fact-checker subagent. Stored at memory/workspace/{task_id}/fact-check.json. The verdict enum is the CANONICAL producer contract (2026-08-02): consumers (scripts/pipeline/fc_verdict.py, used by both the orchestrator content gate and pre_publish_gate) additionally tolerate legacy aliases on READ, but at WRITE time exactly these four strings are legal — 7 of 338 historical artifacts (2.1%) invented out-of-enum verdicts ('issues_fixed', 'DONE_WITH_CONCERNS', 'BLOCKED - DO NOT PUBLISH') because no schema constrained this field.",
+  "type": "object",
+  "required": ["verdict", "_generated_by"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["CLEAN", "CLEAN_WITH_NOTES", "FIX_REQUIRED", "BLOCK_PUBLISH"],
+      "description": "CLEAN = publish-ready, nothing fixed. CLEAN_WITH_NOTES = publish-ready after in-place fixes (record them in issues[]/notes[]). FIX_REQUIRED = intermediate, pipeline must fix then re-dispatch. BLOCK_PUBLISH = hard veto."
+    },
+    "_generated_by": {
+      "type": "string",
+      "const": "fact-checker-subagent",
+      "description": "Provenance stamp checked by pre_publish_gate."
+    },
+    "issues": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Findings, including in-place corrections recorded for CLEAN_WITH_NOTES."
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Free-form audit notes (e.g. before/after of an in-place correction)."
+    },
+    "charts_updated": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "image-prompts.json chart_spec slots updated during correction sync (2026-07-01)."
+    }
+  },
+  "additionalProperties": true
+}

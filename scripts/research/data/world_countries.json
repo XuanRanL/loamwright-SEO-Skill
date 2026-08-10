@@ -1,0 +1,1543 @@
+{
+ "_schema": "v1.0 — world countries. iso2 → {name, population, aliases, word_collision}",
+ "_source": "GeoNames (geonames.org), CC-BY 4.0 — attribution required — countryInfo.txt",
+ "countries": {
+  "AD": {
+   "name": "Andorra",
+   "population": 77006,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AE": {
+   "name": "United Arab Emirates",
+   "population": 9630959,
+   "aliases": [
+    "uae"
+   ],
+   "word_collision": false
+  },
+  "AF": {
+   "name": "Afghanistan",
+   "population": 37172386,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AG": {
+   "name": "Antigua and Barbuda",
+   "population": 96286,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AI": {
+   "name": "Anguilla",
+   "population": 13254,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AL": {
+   "name": "Albania",
+   "population": 2866376,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AM": {
+   "name": "Armenia",
+   "population": 3090500,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AO": {
+   "name": "Angola",
+   "population": 30809762,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AQ": {
+   "name": "Antarctica",
+   "population": 0,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AR": {
+   "name": "Argentina",
+   "population": 44494502,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AS": {
+   "name": "American Samoa",
+   "population": 55465,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AT": {
+   "name": "Austria",
+   "population": 8847037,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AU": {
+   "name": "Australia",
+   "population": 24992369,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AW": {
+   "name": "Aruba",
+   "population": 105845,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AX": {
+   "name": "Aland Islands",
+   "population": 26711,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AZ": {
+   "name": "Azerbaijan",
+   "population": 10224900,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BA": {
+   "name": "Bosnia and Herzegovina",
+   "population": 3323929,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BB": {
+   "name": "Barbados",
+   "population": 286641,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BD": {
+   "name": "Bangladesh",
+   "population": 161356039,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BE": {
+   "name": "Belgium",
+   "population": 11422068,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BF": {
+   "name": "Burkina Faso",
+   "population": 19751535,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BG": {
+   "name": "Bulgaria",
+   "population": 7000039,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BH": {
+   "name": "Bahrain",
+   "population": 1569439,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BI": {
+   "name": "Burundi",
+   "population": 11175378,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BJ": {
+   "name": "Benin",
+   "population": 11485048,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BL": {
+   "name": "Saint Barthelemy",
+   "population": 8450,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BM": {
+   "name": "Bermuda",
+   "population": 63968,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BN": {
+   "name": "Brunei",
+   "population": 428962,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BO": {
+   "name": "Bolivia",
+   "population": 11353142,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BQ": {
+   "name": "Bonaire, Saint Eustatius and Saba ",
+   "population": 18012,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BR": {
+   "name": "Brazil",
+   "population": 209469333,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BS": {
+   "name": "Bahamas",
+   "population": 385640,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BT": {
+   "name": "Bhutan",
+   "population": 754394,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BV": {
+   "name": "Bouvet Island",
+   "population": 0,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BW": {
+   "name": "Botswana",
+   "population": 2254126,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BY": {
+   "name": "Belarus",
+   "population": 9485386,
+   "aliases": [],
+   "word_collision": false
+  },
+  "BZ": {
+   "name": "Belize",
+   "population": 383071,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CA": {
+   "name": "Canada",
+   "population": 37058856,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CC": {
+   "name": "Cocos Islands",
+   "population": 628,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CD": {
+   "name": "Democratic Republic of the Congo",
+   "population": 84068091,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CF": {
+   "name": "Central African Republic",
+   "population": 4666377,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CG": {
+   "name": "Republic of the Congo",
+   "population": 5244363,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CH": {
+   "name": "Switzerland",
+   "population": 8516543,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CI": {
+   "name": "Ivory Coast",
+   "population": 25069229,
+   "aliases": [
+    "ivory coast"
+   ],
+   "word_collision": false
+  },
+  "CK": {
+   "name": "Cook Islands",
+   "population": 21388,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CL": {
+   "name": "Chile",
+   "population": 18729160,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CM": {
+   "name": "Cameroon",
+   "population": 25216237,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CN": {
+   "name": "China",
+   "population": 1411778724,
+   "aliases": [],
+   "word_collision": true
+  },
+  "CO": {
+   "name": "Colombia",
+   "population": 49648685,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CR": {
+   "name": "Costa Rica",
+   "population": 4999441,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CU": {
+   "name": "Cuba",
+   "population": 11338138,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CV": {
+   "name": "Cabo Verde",
+   "population": 543767,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CW": {
+   "name": "Curacao",
+   "population": 159849,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CX": {
+   "name": "Christmas Island",
+   "population": 1500,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CY": {
+   "name": "Cyprus",
+   "population": 1189265,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CZ": {
+   "name": "Czechia",
+   "population": 10625695,
+   "aliases": [
+    "czech republic",
+    "czechia"
+   ],
+   "word_collision": false
+  },
+  "DE": {
+   "name": "Germany",
+   "population": 82927922,
+   "aliases": [],
+   "word_collision": false
+  },
+  "DJ": {
+   "name": "Djibouti",
+   "population": 958920,
+   "aliases": [],
+   "word_collision": false
+  },
+  "DK": {
+   "name": "Denmark",
+   "population": 5797446,
+   "aliases": [],
+   "word_collision": false
+  },
+  "DM": {
+   "name": "Dominica",
+   "population": 71625,
+   "aliases": [],
+   "word_collision": false
+  },
+  "DO": {
+   "name": "Dominican Republic",
+   "population": 10627165,
+   "aliases": [],
+   "word_collision": false
+  },
+  "DZ": {
+   "name": "Algeria",
+   "population": 42228429,
+   "aliases": [],
+   "word_collision": false
+  },
+  "EC": {
+   "name": "Ecuador",
+   "population": 17084357,
+   "aliases": [],
+   "word_collision": false
+  },
+  "EE": {
+   "name": "Estonia",
+   "population": 1320884,
+   "aliases": [],
+   "word_collision": false
+  },
+  "EG": {
+   "name": "Egypt",
+   "population": 98423595,
+   "aliases": [],
+   "word_collision": false
+  },
+  "EH": {
+   "name": "Western Sahara",
+   "population": 273008,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ER": {
+   "name": "Eritrea",
+   "population": 6209262,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ES": {
+   "name": "Spain",
+   "population": 46723749,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ET": {
+   "name": "Ethiopia",
+   "population": 109224559,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FI": {
+   "name": "Finland",
+   "population": 5518050,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FJ": {
+   "name": "Fiji",
+   "population": 883483,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FK": {
+   "name": "Falkland Islands",
+   "population": 2638,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FM": {
+   "name": "Micronesia",
+   "population": 112640,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FO": {
+   "name": "Faroe Islands",
+   "population": 48497,
+   "aliases": [],
+   "word_collision": false
+  },
+  "FR": {
+   "name": "France",
+   "population": 66987244,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GA": {
+   "name": "Gabon",
+   "population": 2119275,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GB": {
+   "name": "United Kingdom",
+   "population": 66488991,
+   "aliases": [
+    "uk",
+    "u k",
+    "great britain",
+    "britain"
+   ],
+   "word_collision": false
+  },
+  "GD": {
+   "name": "Grenada",
+   "population": 111454,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GE": {
+   "name": "Georgia",
+   "population": 3704500,
+   "aliases": [],
+   "word_collision": true
+  },
+  "GF": {
+   "name": "French Guiana",
+   "population": 195506,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GG": {
+   "name": "Guernsey",
+   "population": 65228,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GH": {
+   "name": "Ghana",
+   "population": 29767108,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GI": {
+   "name": "Gibraltar",
+   "population": 33718,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GL": {
+   "name": "Greenland",
+   "population": 56025,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GM": {
+   "name": "Gambia",
+   "population": 2280102,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GN": {
+   "name": "Guinea",
+   "population": 12414318,
+   "aliases": [],
+   "word_collision": true
+  },
+  "GP": {
+   "name": "Guadeloupe",
+   "population": 443000,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GQ": {
+   "name": "Equatorial Guinea",
+   "population": 1308974,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GR": {
+   "name": "Greece",
+   "population": 10727668,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GS": {
+   "name": "South Georgia and the South Sandwich Islands",
+   "population": 30,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GT": {
+   "name": "Guatemala",
+   "population": 17247807,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GU": {
+   "name": "Guam",
+   "population": 165768,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GW": {
+   "name": "Guinea-Bissau",
+   "population": 1874309,
+   "aliases": [],
+   "word_collision": false
+  },
+  "GY": {
+   "name": "Guyana",
+   "population": 779004,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HK": {
+   "name": "Hong Kong",
+   "population": 7396076,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HM": {
+   "name": "Heard Island and McDonald Islands",
+   "population": 0,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HN": {
+   "name": "Honduras",
+   "population": 9587522,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HR": {
+   "name": "Croatia",
+   "population": 3871833,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HT": {
+   "name": "Haiti",
+   "population": 11123176,
+   "aliases": [],
+   "word_collision": false
+  },
+  "HU": {
+   "name": "Hungary",
+   "population": 9768785,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ID": {
+   "name": "Indonesia",
+   "population": 267663435,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IE": {
+   "name": "Ireland",
+   "population": 4853506,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IL": {
+   "name": "Israel",
+   "population": 8883800,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IM": {
+   "name": "Isle of Man",
+   "population": 84077,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IN": {
+   "name": "India",
+   "population": 1352617328,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IO": {
+   "name": "British Indian Ocean Territory",
+   "population": 4000,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IQ": {
+   "name": "Iraq",
+   "population": 38433600,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IR": {
+   "name": "Iran",
+   "population": 81800269,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IS": {
+   "name": "Iceland",
+   "population": 353574,
+   "aliases": [],
+   "word_collision": false
+  },
+  "IT": {
+   "name": "Italy",
+   "population": 60431283,
+   "aliases": [],
+   "word_collision": false
+  },
+  "JE": {
+   "name": "Jersey",
+   "population": 90812,
+   "aliases": [],
+   "word_collision": false
+  },
+  "JM": {
+   "name": "Jamaica",
+   "population": 2934855,
+   "aliases": [],
+   "word_collision": false
+  },
+  "JO": {
+   "name": "Jordan",
+   "population": 9956011,
+   "aliases": [],
+   "word_collision": true
+  },
+  "JP": {
+   "name": "Japan",
+   "population": 126529100,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KE": {
+   "name": "Kenya",
+   "population": 51393010,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KG": {
+   "name": "Kyrgyzstan",
+   "population": 6315800,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KH": {
+   "name": "Cambodia",
+   "population": 16249798,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KI": {
+   "name": "Kiribati",
+   "population": 115847,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KM": {
+   "name": "Comoros",
+   "population": 832322,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KN": {
+   "name": "Saint Kitts and Nevis",
+   "population": 52441,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KP": {
+   "name": "North Korea",
+   "population": 25549819,
+   "aliases": [
+    "north korea"
+   ],
+   "word_collision": false
+  },
+  "KR": {
+   "name": "South Korea",
+   "population": 51635256,
+   "aliases": [
+    "south korea"
+   ],
+   "word_collision": false
+  },
+  "XK": {
+   "name": "Kosovo",
+   "population": 1845300,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KW": {
+   "name": "Kuwait",
+   "population": 4137309,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KY": {
+   "name": "Cayman Islands",
+   "population": 64174,
+   "aliases": [],
+   "word_collision": false
+  },
+  "KZ": {
+   "name": "Kazakhstan",
+   "population": 18276499,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LA": {
+   "name": "Laos",
+   "population": 7061507,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LB": {
+   "name": "Lebanon",
+   "population": 6848925,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LC": {
+   "name": "Saint Lucia",
+   "population": 181889,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LI": {
+   "name": "Liechtenstein",
+   "population": 37910,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LK": {
+   "name": "Sri Lanka",
+   "population": 21670000,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LR": {
+   "name": "Liberia",
+   "population": 4818977,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LS": {
+   "name": "Lesotho",
+   "population": 2108132,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LT": {
+   "name": "Lithuania",
+   "population": 2789533,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LU": {
+   "name": "Luxembourg",
+   "population": 607728,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LV": {
+   "name": "Latvia",
+   "population": 1926542,
+   "aliases": [],
+   "word_collision": false
+  },
+  "LY": {
+   "name": "Libya",
+   "population": 6678567,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MA": {
+   "name": "Morocco",
+   "population": 36029138,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MC": {
+   "name": "Monaco",
+   "population": 38682,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MD": {
+   "name": "Moldova",
+   "population": 3545883,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ME": {
+   "name": "Montenegro",
+   "population": 622345,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MF": {
+   "name": "Saint Martin",
+   "population": 37264,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MG": {
+   "name": "Madagascar",
+   "population": 26262368,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MH": {
+   "name": "Marshall Islands",
+   "population": 58413,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MK": {
+   "name": "North Macedonia",
+   "population": 2082958,
+   "aliases": [
+    "macedonia"
+   ],
+   "word_collision": false
+  },
+  "ML": {
+   "name": "Mali",
+   "population": 19077690,
+   "aliases": [],
+   "word_collision": true
+  },
+  "MM": {
+   "name": "Myanmar",
+   "population": 53708395,
+   "aliases": [
+    "burma"
+   ],
+   "word_collision": false
+  },
+  "MN": {
+   "name": "Mongolia",
+   "population": 3170208,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MO": {
+   "name": "Macao",
+   "population": 631636,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MP": {
+   "name": "Northern Mariana Islands",
+   "population": 56882,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MQ": {
+   "name": "Martinique",
+   "population": 432900,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MR": {
+   "name": "Mauritania",
+   "population": 4403319,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MS": {
+   "name": "Montserrat",
+   "population": 9341,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MT": {
+   "name": "Malta",
+   "population": 483530,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MU": {
+   "name": "Mauritius",
+   "population": 1265303,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MV": {
+   "name": "Maldives",
+   "population": 515696,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MW": {
+   "name": "Malawi",
+   "population": 17563749,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MX": {
+   "name": "Mexico",
+   "population": 126190788,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MY": {
+   "name": "Malaysia",
+   "population": 31528585,
+   "aliases": [],
+   "word_collision": false
+  },
+  "MZ": {
+   "name": "Mozambique",
+   "population": 29495962,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NA": {
+   "name": "Namibia",
+   "population": 2448255,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NC": {
+   "name": "New Caledonia",
+   "population": 284060,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NE": {
+   "name": "Niger",
+   "population": 22442948,
+   "aliases": [],
+   "word_collision": true
+  },
+  "NF": {
+   "name": "Norfolk Island",
+   "population": 1828,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NG": {
+   "name": "Nigeria",
+   "population": 195874740,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NI": {
+   "name": "Nicaragua",
+   "population": 6465513,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NL": {
+   "name": "The Netherlands",
+   "population": 17231017,
+   "aliases": [
+    "holland"
+   ],
+   "word_collision": false
+  },
+  "NO": {
+   "name": "Norway",
+   "population": 5314336,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NP": {
+   "name": "Nepal",
+   "population": 28087871,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NR": {
+   "name": "Nauru",
+   "population": 12704,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NU": {
+   "name": "Niue",
+   "population": 2166,
+   "aliases": [],
+   "word_collision": false
+  },
+  "NZ": {
+   "name": "New Zealand",
+   "population": 4885500,
+   "aliases": [],
+   "word_collision": false
+  },
+  "OM": {
+   "name": "Oman",
+   "population": 4829483,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PA": {
+   "name": "Panama",
+   "population": 4176873,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PE": {
+   "name": "Peru",
+   "population": 31989256,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PF": {
+   "name": "French Polynesia",
+   "population": 277679,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PG": {
+   "name": "Papua New Guinea",
+   "population": 8606316,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PH": {
+   "name": "Philippines",
+   "population": 106651922,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PK": {
+   "name": "Pakistan",
+   "population": 212215030,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PL": {
+   "name": "Poland",
+   "population": 37978548,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PM": {
+   "name": "Saint Pierre and Miquelon",
+   "population": 7012,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PN": {
+   "name": "Pitcairn",
+   "population": 46,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PR": {
+   "name": "Puerto Rico",
+   "population": 3195153,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PS": {
+   "name": "Palestinian Territory",
+   "population": 4569087,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PT": {
+   "name": "Portugal",
+   "population": 10281762,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PW": {
+   "name": "Palau",
+   "population": 17907,
+   "aliases": [],
+   "word_collision": false
+  },
+  "PY": {
+   "name": "Paraguay",
+   "population": 6956071,
+   "aliases": [],
+   "word_collision": false
+  },
+  "QA": {
+   "name": "Qatar",
+   "population": 2781677,
+   "aliases": [],
+   "word_collision": false
+  },
+  "RE": {
+   "name": "Reunion",
+   "population": 776948,
+   "aliases": [],
+   "word_collision": false
+  },
+  "RO": {
+   "name": "Romania",
+   "population": 19473936,
+   "aliases": [],
+   "word_collision": false
+  },
+  "RS": {
+   "name": "Serbia",
+   "population": 6982084,
+   "aliases": [],
+   "word_collision": false
+  },
+  "RU": {
+   "name": "Russia",
+   "population": 144478050,
+   "aliases": [],
+   "word_collision": false
+  },
+  "RW": {
+   "name": "Rwanda",
+   "population": 12301939,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SA": {
+   "name": "Saudi Arabia",
+   "population": 33699947,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SB": {
+   "name": "Solomon Islands",
+   "population": 652858,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SC": {
+   "name": "Seychelles",
+   "population": 96762,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SD": {
+   "name": "Sudan",
+   "population": 41801533,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SS": {
+   "name": "South Sudan",
+   "population": 8260490,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SE": {
+   "name": "Sweden",
+   "population": 10183175,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SG": {
+   "name": "Singapore",
+   "population": 5638676,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SH": {
+   "name": "Saint Helena",
+   "population": 7460,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SI": {
+   "name": "Slovenia",
+   "population": 2067372,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SJ": {
+   "name": "Svalbard and Jan Mayen",
+   "population": 2550,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SK": {
+   "name": "Slovakia",
+   "population": 5447011,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SL": {
+   "name": "Sierra Leone",
+   "population": 7650154,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SM": {
+   "name": "San Marino",
+   "population": 33785,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SN": {
+   "name": "Senegal",
+   "population": 15854360,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SO": {
+   "name": "Somalia",
+   "population": 15008154,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SR": {
+   "name": "Suriname",
+   "population": 575991,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ST": {
+   "name": "Sao Tome and Principe",
+   "population": 197700,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SV": {
+   "name": "El Salvador",
+   "population": 6420744,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SX": {
+   "name": "Sint Maarten",
+   "population": 40654,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SY": {
+   "name": "Syria",
+   "population": 16906283,
+   "aliases": [],
+   "word_collision": false
+  },
+  "SZ": {
+   "name": "Eswatini",
+   "population": 1136191,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TC": {
+   "name": "Turks and Caicos Islands",
+   "population": 37665,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TD": {
+   "name": "Chad",
+   "population": 15477751,
+   "aliases": [],
+   "word_collision": true
+  },
+  "TF": {
+   "name": "French Southern Territories",
+   "population": 140,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TG": {
+   "name": "Togo",
+   "population": 7889094,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TH": {
+   "name": "Thailand",
+   "population": 69428524,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TJ": {
+   "name": "Tajikistan",
+   "population": 9100837,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TK": {
+   "name": "Tokelau",
+   "population": 1466,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TL": {
+   "name": "Timor Leste",
+   "population": 1267972,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TM": {
+   "name": "Turkmenistan",
+   "population": 5850908,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TN": {
+   "name": "Tunisia",
+   "population": 11565204,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TO": {
+   "name": "Tonga",
+   "population": 103197,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TR": {
+   "name": "Turkey",
+   "population": 82319724,
+   "aliases": [],
+   "word_collision": true
+  },
+  "TT": {
+   "name": "Trinidad and Tobago",
+   "population": 1389858,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TV": {
+   "name": "Tuvalu",
+   "population": 11508,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TW": {
+   "name": "Taiwan",
+   "population": 23451837,
+   "aliases": [],
+   "word_collision": false
+  },
+  "TZ": {
+   "name": "Tanzania",
+   "population": 56318348,
+   "aliases": [],
+   "word_collision": false
+  },
+  "UA": {
+   "name": "Ukraine",
+   "population": 40000000,
+   "aliases": [],
+   "word_collision": false
+  },
+  "UG": {
+   "name": "Uganda",
+   "population": 42723139,
+   "aliases": [],
+   "word_collision": false
+  },
+  "UM": {
+   "name": "United States Minor Outlying Islands",
+   "population": 0,
+   "aliases": [],
+   "word_collision": false
+  },
+  "US": {
+   "name": "United States",
+   "population": 327167434,
+   "aliases": [
+    "usa",
+    "united states of america"
+   ],
+   "word_collision": false
+  },
+  "UY": {
+   "name": "Uruguay",
+   "population": 3449299,
+   "aliases": [],
+   "word_collision": false
+  },
+  "UZ": {
+   "name": "Uzbekistan",
+   "population": 32955400,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VA": {
+   "name": "Vatican",
+   "population": 921,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VC": {
+   "name": "Saint Vincent and the Grenadines",
+   "population": 110211,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VE": {
+   "name": "Venezuela",
+   "population": 28870195,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VG": {
+   "name": "British Virgin Islands",
+   "population": 29802,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VI": {
+   "name": "U.S. Virgin Islands",
+   "population": 106977,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VN": {
+   "name": "Vietnam",
+   "population": 95540395,
+   "aliases": [],
+   "word_collision": false
+  },
+  "VU": {
+   "name": "Vanuatu",
+   "population": 292680,
+   "aliases": [],
+   "word_collision": false
+  },
+  "WF": {
+   "name": "Wallis and Futuna",
+   "population": 16025,
+   "aliases": [],
+   "word_collision": false
+  },
+  "WS": {
+   "name": "Samoa",
+   "population": 196130,
+   "aliases": [],
+   "word_collision": false
+  },
+  "YE": {
+   "name": "Yemen",
+   "population": 28498687,
+   "aliases": [],
+   "word_collision": false
+  },
+  "YT": {
+   "name": "Mayotte",
+   "population": 279471,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ZA": {
+   "name": "South Africa",
+   "population": 57779622,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ZM": {
+   "name": "Zambia",
+   "population": 17351822,
+   "aliases": [],
+   "word_collision": false
+  },
+  "ZW": {
+   "name": "Zimbabwe",
+   "population": 16868409,
+   "aliases": [],
+   "word_collision": false
+  },
+  "CS": {
+   "name": "Serbia and Montenegro",
+   "population": 10829175,
+   "aliases": [],
+   "word_collision": false
+  },
+  "AN": {
+   "name": "Netherlands Antilles",
+   "population": 300000,
+   "aliases": [],
+   "word_collision": false
+  }
+ }
+}

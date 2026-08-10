@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cta-brief.schema.json",
+  "title": "CTA Brief (Step 1 output — cta_brief_builder.py)",
+  "type": "object",
+  "required": ["task_id", "resolved_service", "target_url", "_generated_by"],
+  "properties": {
+    "task_id": {"type": "string"},
+    "blog_category": {"type": ["string", "null"]},
+    "category_source": {
+      "type": ["string", "null"],
+      "enum": ["state", "meta", null],
+      "description": "Which candidate source resolved blog_category against the routing map: 'state' (state.json :: brief.category — no pipeline stage currently writes this), 'meta' (memory/workspace/{task_id}/meta.json :: categories[], the real signal written by meta-builder), or null when no candidate matched (fallback_used=true) or on the no-config sentinel."
+    },
+    "resolved_service": {
+      "comment": "Null on the no-config sentinel (skipped_no_config=true); an object when a real brief was resolved.",
+      "type": ["object", "null"],
+      "required": ["slug", "url"],
+      "properties": {
+        "slug": {"type": "string"},
+        "url": {"type": "string", "format": "uri"},
+        "positioning": {"type": "string"},
+        "persona": {"type": "string"},
+        "distinct_value_prop": {"type": "string"},
+        "own_page_cta_copy": {"type": "string"}
+      }
+    },
+    "target_url": {"type": ["string", "null"], "format": "uri"},
+    "skipped_no_config": {
+      "type": "boolean",
+      "description": "True on the no-config sentinel: the project has no conversion_offers config, so no real brief was resolved and cta-writer must be skipped."
+    },
+    "matched_team_member": {
+      "type": ["object", "null"],
+      "properties": {
+        "name": {"type": "string"},
+        "role": {"type": "string"},
+        "photo_media_url": {"type": "string"}
+      }
+    },
+    "matched_proof_points": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "business_model": {
+      "type": "string",
+      "enum": ["b2b_services", "ecommerce"],
+      "description": "Present on the ecommerce path only (v3.38): lets downstream stages branch without re-reading business-context.json. The b2b path and the no-config sentinel omit it."
+    },
+    "resolved_products": {
+      "type": "object",
+      "description": "Ecommerce-path (business_model='ecommerce') resolution: the WooCommerce products/category the article's REAL content matched, plus the deterministically-assembled [products ...] shortcode (the LLM never builds it). Absent on the b2b path and the sentinel.",
+      "required": ["mode", "ids", "category_slug", "product_names", "shortcode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["ids", "category", "fallback"],
+          "description": "ids = ≥1 product name matched verbatim in the body (up to 3, document order); category = keyword/title/H2 token-overlap matched a product category; fallback = default_category or a link-only shop brief."
+        },
+        "ids": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "description": "WooCommerce product IDs (ids mode only; else empty)."
+        },
+        "category_slug": {
+          "type": ["string", "null"],
+          "description": "Matched product-category slug (category or default-category fallback); null in ids mode and no-category fallback."
+        },
+        "product_names": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "HTML-unescaped display names of the matched products (ids mode only; else empty)."
+        },
+        "shortcode": {
+          "type": ["string", "null"],
+          "description": "Fully-formed WooCommerce [products ...] shortcode WordPress expands at page-view time. null in the no-category fallback (link-only brief), OR when a matched category/default_category slug fails the charset guard (see `warning`)."
+        },
+        "warning": {
+          "type": "string",
+          "description": "Present only when a defense-in-depth guard suppressed part of the resolution (v3.38 Task 4): a matched category slug failed the [a-z0-9%-]+ charset guard (shortcode withheld), or a SKU-verbatim match had zero products with a valid integer catalog id (fell through to category matching). Absent on a clean resolution."
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Per-project cta-writer/tone constraints copied verbatim from conversion_offers.constraints (v3.38). Known keys: no_person_blocks (bool), tone (string), banned_phrases (array). Default {} when unset.",
+      "additionalProperties": true
+    },
+    "fallback_used": {"type": "boolean"},
+    "_generated_by": {"const": "cta-brief-builder"},
+    "generated_at": {"type": "string"}
+  }
+}

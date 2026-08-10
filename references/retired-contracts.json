@@ -1,0 +1,37 @@
+{
+  "_purpose": "Rule 11 registry. Each entry names a contract that CHANGED, so that any instruction layer still mentioning the old form must also acknowledge the new one. Consumed by scripts/lint/contract_fanout_check.py. Add an entry in the SAME commit that changes a cross-cutting contract — that is the whole point: the registry is how a contract change becomes mechanically enforceable instead of a request that a human remember to grep.",
+  "_how_to_add": "pattern = a distinctive regex for the OLD contract's wording. requires = a regex that any file legitimately mentioning it must ALSO contain (the pointer to the new contract). The rule is deliberately not 'this phrase is banned': legacy names stay correct for internal artifacts, and a lint that fires on correct usage gets muted — which is worse than no lint.",
+  "retired_contracts": [
+    {
+      "id": "style-tokens-v3420",
+      "retired_in": "3.42.0",
+      "date": "2026-08-01",
+      "retired_contract": "Published article HTML carries the literal class '{slug}-pillar' (and the legacy component names), so publish-time verification can grep the live page for it.",
+      "current_contract": "For any project with brand/style-tokens.json (all 13 today), wp_publisher._apply_project_styling rewrites body + CSS at the publish boundary into per-project HMAC tokens: project-charlie-pillar ships as mwxiod-1ymm61. Internal artifacts (draft.md, lints) keep the legacy names. Published names must be RESOLVED, never hand-written.",
+      "cure": "Resolve the published name with `python -m scripts._core.style_tokens --show {slug}`, or let verify_post.py do it. Verifying live HTML for a literal '{slug}-pillar' on a tokenized project is a check that can never pass.",
+      "pattern": "\\{slug\\}-pillar|project-charlie-pillar",
+      "requires": "style_tokens|style-tokens"
+    },
+    {
+      "id": "rankmath-updatemeta-route",
+      "retired_in": "3.x",
+      "date": "2026-05-20",
+      "retired_contract": "SEO meta is written via POST /xuanran/v1/rank-math-bridge or POST /rankmath/v1/updateMeta.",
+      "current_contract": "SEO meta goes through POST /wp/v2/posts/{id} with a `meta` body; the MU-plugin registers the rank_math_* keys with a REST schema. The old bridge route 404s on POST, and updateMeta corrupts rank_math_schema_jsonld so the front-end 500s on render.",
+      "cure": "Use POST /wp/v2/posts/{id} with {\"meta\": {\"rank_math_*\": ...}}. Append custom schema to the post body as inline JSON-LD instead of sending it through updateMeta.",
+      "pattern": "rankmath/v1/updateMeta|POST[^\n]{0,40}xuanran/v1/rank-math-bridge",
+      "requires": "wp/v2/posts",
+      "note_on_scope": "Only POST was retired. GET /xuanran/v1/rank-math-bridge survives and is the canonical bridge_version probe, so the pattern must not match a bare mention of the route."
+    },
+    {
+      "id": "cta-placement-end-v3415",
+      "retired_in": "3.41.5",
+      "date": "2026-07-21",
+      "retired_contract": "CTA and product modules may be placed at the END of the article body.",
+      "current_contract": "Placement is MID fleet-wide; 'end' is used by nothing, and repairing a legacy article means moving end -> mid first.",
+      "cure": "Use the mid placement. If you find an 'end' placement in a live post, move it before doing anything else to that article.",
+      "pattern": "placement\\s*[:=]\\s*[\"']end[\"']",
+      "requires": "mid"
+    }
+  ]
+}

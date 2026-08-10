@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/research.schema.json",
+  "title": "Research Output",
+  "description": "Output of Phase Research (keyword-research + serp-analysis + competitor-analysis + content-gap-analysis + surface-targeting). Stored at memory/workspace/{task_id}/research.json.",
+  "type": "object",
+  "required": ["primary_keyword", "intent", "competitor_titles"],
+  "properties": {
+    "primary_keyword": {"type": "string"},
+    "secondary_keywords": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "semantic_clusters": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "LSI / semantic neighbor keywords"
+    },
+    "intent": {
+      "type": "string",
+      "enum": ["informational", "commercial", "transactional", "navigational"]
+    },
+    "paa": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "People Also Ask questions, original wording preserved"
+    },
+    "competitor_titles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["title", "url"],
+        "properties": {
+          "title": {"type": "string"},
+          "url": {"type": "string", "format": "uri"},
+          "domain": {"type": "string"},
+          "word_count_estimate": {"type": "integer", "minimum": 0},
+          "content_gap": {"type": "string", "description": "What this competitor missed or covered shallowly"},
+          "schema_types": {"type": "array", "items": {"type": "string"}},
+          "freshness_days": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "serp_features": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "featured_snippet", "video", "video_carousel", "image_pack", "inline_images",
+          "shopping", "shopping_results", "knowledge_panel", "knowledge_graph",
+          "site_links", "ai_overview", "paa_box", "local_pack", "news", "top_stories",
+          "paid_ads", "related_searches", "discussions_and_forums",
+          "directory_results", "reddit_top_results"
+        ],
+        "description": "Canonical SERP-feature vocabulary (v3.36.0). Extended 2026-07-06 because the old 10-value enum could not express honest SerpApi ground truth (paid_ads / related_searches / discussions_and_forums), while the orchestrator's serp-analysis dispatch prompt was ALREADY instructing subagents to emit those names — an intra-repo contract contradiction that forced a sanctioned skip on a genuinely feature-bearing SERP. Raw SerpApi keys (ads, related_questions, local_results, local_map, inline_videos, answer_box, sitelinks) are NOT valid here — scripts/validate/research_contract.py --fix maps them to this vocabulary deterministically."
+      },
+      "uniqueItems": true
+    },
+    "search_volume_hint": {
+      "type": "string",
+      "enum": ["high", "mid", "low", "unknown"]
+    },
+    "ai_overview_present": {"type": "boolean"},
+    "ai_overview_cited_sources": {
+      "type": "array",
+      "items": {"type": "string", "format": "uri"},
+      "description": "URLs currently cited by Google AIO for this query"
+    },
+    "ai_engine_findings": {
+      "type": "object",
+      "description": "Per-engine probe results (chatgpt/perplexity/claude/gemini)",
+      "patternProperties": {
+        "^(chatgpt|perplexity|claude|gemini)$": {
+          "type": "object",
+          "properties": {
+            "our_domain_cited": {"type": "boolean"},
+            "competitors_cited": {"type": "array", "items": {"type": "string"}},
+            "factual_accuracy": {"type": "string", "enum": ["accurate", "partial", "inaccurate", "unknown"]}
+          }
+        }
+      }
+    },
+    "entity_intelligence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {"type": "string"},
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "wikipedia_url": {"type": ["string", "null"], "format": "uri"},
+          "wikidata_qid": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "content_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gap_type", "description"],
+        "properties": {
+          "gap_type": {
+            "type": "string",
+            "enum": ["seo-gap", "ai-gap", "faq-gap", "format-gap", "authority-gap"]
+          },
+          "description": {"type": "string"},
+          "opportunity_score": {"type": "number", "minimum": 0, "maximum": 100}
+        }
+      }
+    },
+    "research_cache_used": {"type": "boolean"},
+    "tavily_credits_consumed": {"type": "integer", "minimum": 0},
+    "community_insights": {
+      "type": "object",
+      "description": "Reddit/X community research (signals + verified claims). Community URLs are never cited; verified claims cite the authoritative corroborating source.",
+      "properties": {
+        "sources_queried": {"type": "array", "items": {"type": "string"}},
+        "threads_analyzed": {"type": "integer", "minimum": 0},
+        "signals": {
+          "type": "object",
+          "description": "Used freely by writer + PAA; never stated as fact, never cited."
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {"type": "string"},
+              "source_url": {"type": "string"},
+              "source": {"type": "string"},
+              "verdict": {"type": "string", "enum": ["verified", "unverified", "contradicted"]},
+              "dimensions": {"type": "object"},
+              "authoritative_source": {"type": ["object", "null"]},
+              "writer_guidance": {
+                "type": "string",
+                "enum": ["state_as_fact_with_auth_cite", "attributed_hedge_no_cite", "drop"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

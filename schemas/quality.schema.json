@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/quality.schema.json",
+  "title": "Quality Gates Report",
+  "description": "Output of scripts/validate/run_quality_gates.py (CORE-EEAT + CITE + AI-Slop), stored at memory/workspace/{task_id}/quality.json and consumed by scripts/pipeline/pre_publish_gate.py::check_quality_gates. REWRITTEN 2026-07-01: the previous schema described an aspirational v3.2 contract (overall_score/iteration/gates.pillar_100/format_fit) that run_quality_gates.py never implemented — total producer/consumer drift, silently unenforced because the runner writes via Path.write_text (the Write/Edit schema hook never fires) and only surfaced when a legitimate override_note Edit was hook-blocked. This schema now documents the REAL contract.",
+  "type": "object",
+  "required": ["core_eeat", "cite", "ai_slop", "combined_verdict", "all_pass"],
+  "properties": {
+    "core_eeat": {
+      "type": "object",
+      "description": "CORE-EEAT 80-item scorer summary (scripts/validate/core_eeat_scorer.py)",
+      "required": ["score", "verdict"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "verdict": {"type": "string", "enum": ["SHIP", "FIX", "BLOCKED"]},
+        "vetoes": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["T04", "C01", "R10"]},
+          "description": "Hard vetoes triggered; any entry blocks publish unless quality.json carries a justified override_note"
+        }
+      }
+    },
+    "cite": {
+      "type": "object",
+      "description": "CITE 40-item scorer summary (scripts/validate/cite_scorer.py)",
+      "required": ["score", "verdict"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "verdict": {"type": "string", "enum": ["SHIP", "FIX", "BLOCKED"]},
+        "vetoes": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["T03", "T05", "T09", "COMP01"]}
+        }
+      }
+    },
+    "ai_slop": {
+      "type": "object",
+      "description": "AI-Slop score summary (scripts/validate/ai_slop_score.py); formula 4xPatterns + 25x(1-Burstiness) + 15xVocab",
+      "required": ["score", "passes"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0},
+        "passes": {"type": "boolean", "description": "score < 20"},
+        "band": {
+          "type": "string",
+          "enum": ["Pristine", "Mostly human", "Mixed", "AI-leaning", "Pure AI smell"]
+        }
+      }
+    },
+    "combined_verdict": {
+      "type": "string",
+      "enum": ["SHIP", "FIX_REQUIRED", "BLOCKED"],
+      "description": "Worst-of aggregation across the three gates; pre_publish_gate blocks on FIX_REQUIRED/BLOCKED (or any hard veto) unless override_note is present"
+    },
+    "all_pass": {"type": "boolean"},
+    "override_note": {
+      "type": "string",
+      "minLength": 40,
+      "description": "OPTIONAL operator override with mandatory justification. Sanctioned ONLY for independently re-verified false positives (e.g. C01 fired on bot-walled but real sources: CourtListener 202, SEL 403-to-bots). pre_publish_gate.check_quality_gates passes a blocking verdict/veto when this is present — the note is the audit trail. Never use it to ship an unverified claim."
+    },
+    "generated_at": {"type": "string"}
+  }
+}

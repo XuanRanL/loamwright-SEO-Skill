@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-hooks",
+  "description": "Plugin hooks for cost guarding, schema validation, artifact gate, and session lifecycle.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/session_start_load_project.py",
+            "description": "Load active project context from ~/.xuanran-seo/active-project"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use_cost_guard.py",
+            "description": "Estimate cost of Bash commands invoking LLM/API; block if exceeds daily budget"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_schema_validate.py",
+            "description": "Validate JSON writes against schemas/*.schema.json (exit 2 to block invalid)"
+          },
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_artifact_gate.py",
+            "description": "Enforce frontmatter class:auditor-output on memory/audits/*.md and projects/*/audits/*.md (exit 2 to block missing frontmatter)"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/stop_finalize.py",
+            "description": "Archive completed workspace tasks to memory/workspace/.archived/; cleanup tombstoned projects older than 30d"
+          }
+        ]
+      }
+    ]
+  }
+}

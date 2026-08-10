@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "images.schema.json",
+  "title": "images.json — the image pipeline's slot->file manifest",
+  "description": "Written ONLY by the four image executors (render_data_charts merge, openai_image_pipeline.write_artifacts, real_brand_image_pipeline, image_regen_slots). Nine-field entry contract; there is NO local_path/status field and never has been — a 2026-07-19 session invented that shape by reading absent keys through .get() and 'reconciled' three healthy files (see reference memory). Drivers read this schema, never improvise.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["slot_id", "path", "filename", "alt", "is_featured", "source"],
+    "properties": {
+      "slot_id": {"type": "string", "minLength": 1},
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "description": "PNG path — absolute by contract (agents/image-visual-qa.md); resolved against the plugin root at read time as a legacy tolerance."
+      },
+      "filename": {"type": "string"},
+      "alt": {"type": "string"},
+      "caption": {"type": "string"},
+      "title": {"type": "string"},
+      "description": {"type": "string"},
+      "is_featured": {"type": "boolean"},
+      "source": {
+        "type": "string",
+        "description": "Which executor produced the file: chart_render / realtime / batch / real_brand / regen."
+      }
+    },
+    "additionalProperties": true
+  }
+}

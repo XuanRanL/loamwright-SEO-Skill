@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/meta.schema.json",
+  "title": "SEO Meta Output",
+  "description": "Output of meta-builder skill. Stored at memory/workspace/{task_id}/meta.json. Field names match WordPress + RankMath REST endpoints. Audit 2026-05-22 P5 fixes: tags is now array (not comma-string), image_search_keywords no longer required (production omits it), og_image canonicalized (was og_image_url), twitter_card_type canonicalized (was twitter_card).",
+  "type": "object",
+  "required": ["title", "slug", "excerpt"],
+  "additionalProperties": true,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 30,
+      "maxLength": 120,
+      "description": "Article title (becomes <h1> + WordPress post title). Loosened from 50-65 char range per audit 2026-05-22 — 30-120 reflects the production range across all 24 templates."
+    },
+    "seo_title": {
+      "type": "string",
+      "maxLength": 70,
+      "description": "RankMath rank_math_title (+ og:title). The short indexed <title>; differs from the longer `title`/H1. Target 51-60 chars (hard cap 65). 2026-06-16: MUST share the entity + primary keyword + every number present in `title` (Google preserves a number in the displayed title 97.3% only when it is in BOTH). No (year) suffix here — year belongs in `title`. Validated by scripts/validate/title_validator.py."
+    },
+    "register": {
+      "type": "string",
+      "enum": ["default", "b2b_technical", "b2b_procurement", "dtc_celebration", "dtc_grief", "ecommerce"],
+      "description": "Title register (2026-06-16). Gates the title rules: power-word policy, digit policy, banned terms. Resolved from business-context.json :: voice_default (title_validator.infer_register), with per-article override for dtc_grief vs dtc_celebration."
+    },
+    "slug": {
+      "type": "string",
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case URL slug. Should contain primary_keyword tokens."
+    },
+    "excerpt": {
+      "type": "string",
+      "minLength": 50,
+      "maxLength": 320,
+      "description": "Meta description / RankMath rank_math_description. 50-160 ideal for SERP; loosened upper bound to 320 because production sometimes uses the excerpt field for longer summaries."
+    },
+    "meta_description": {
+      "type": "string",
+      "maxLength": 320,
+      "description": "Alias of excerpt for backward compatibility with older meta-builder output. Publisher reads excerpt if meta_description is absent."
+    },
+    "focus_keyphrase": {
+      "type": "string",
+      "description": "RankMath rank_math_focus_keyword; equals primary_keyword"
+    },
+    "focus_keywords": {
+      "type": "string",
+      "description": "Comma-separated secondary focus keywords"
+    },
+    "canonical_url": {"type": "string", "format": "uri"},
+    "breadcrumb_title": {"type": "string"},
+    "pillar_content": {"type": "boolean"},
+    "robots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["index", "noindex", "nofollow", "noarchive", "noimageindex", "nosnippet"]
+      },
+      "description": "RankMath rank_math_robots. NEVER include 'follow' — invalid enum that 400s the entire POST. Use ['index']; follow is the implicit default."
+    },
+    "advanced_robots": {
+      "type": "object",
+      "description": "RankMath rank_math_advanced_robots — e.g. max-image-preview, max-snippet, max-video-preview"
+    },
+    "tags": {
+      "oneOf": [
+        {"type": "array", "items": {"type": "string"}},
+        {"type": "string", "description": "Comma-separated (legacy)"}
+      ],
+      "description": "Tag names (canonical: array of strings). Legacy comma-separated string also accepted for back-compat — publisher's wp_taxonomy.get_or_create_terms() handles both. Audit 2026-05-22 P5 fixed: production uniformly writes array."
+    },
+    "categories": {
+      "oneOf": [
+        {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 5},
+        {"type": "string"}
+      ],
+      "description": "Category names (canonical: array). 1-5 categories typical."
+    },
+    "image_search_keywords": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "Optional. Keywords for image alt + filename generation. Audit 2026-05-22 P5: removed from required list because production runs (image_prompts.json owns this) consistently omit it."
+    },
+    "schema_jsonld": {
+      "type": "object",
+      "description": "Custom JSON-LD @graph payload (most plugins inject via head; per-post supplementals live in schema.json instead)",
+      "properties": {
+        "@context": {"const": "https://schema.org"},
+        "@graph": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "og_title": {"type": "string", "maxLength": 95},
+    "og_description": {"type": "string", "maxLength": 200},
+    "og_image": {
+      "type": "string",
+      "format": "uri",
+      "description": "Open Graph image URL. CANONICAL field name. Publisher reads og_image; og_image_url accepted as alias for legacy back-compat."
+    },
+    "og_image_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Alias of og_image for legacy back-compat. New emitters should use og_image."
+    },
+    "og_image_alt": {"type": "string"},
+    "twitter_card_type": {
+      "type": "string",
+      "enum": ["summary", "summary_large_image"],
+      "default": "summary_large_image",
+      "description": "Twitter card type. CANONICAL field name. twitter_card accepted as alias for legacy back-compat."
+    },
+    "twitter_card": {
+      "type": "string",
+      "enum": ["summary", "summary_large_image"],
+      "description": "Alias of twitter_card_type for legacy back-compat."
+    },
+    "twitter_title": {"type": "string"},
+    "twitter_description": {"type": "string"},
+    "twitter_image": {"type": "string", "format": "uri"},
+    "twitter_use_facebook": {"type": "boolean"},
+    "secondary_keywords": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "format": {"type": "string"},
+    "word_count_target": {"type": "integer", "minimum": 500},
+    "reading_time_minutes_est": {"type": "integer", "minimum": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "_notes": {"type": "string"}
+  }
+}

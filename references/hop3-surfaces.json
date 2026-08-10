@@ -1,0 +1,103 @@
+{
+  "_purpose": "Rule 13 registry: every artifact this repo generates that gets INSTALLED somewhere the repo cannot see (a live WordPress site). Consumed by tests/test_hop3_surface_registry.py, which gates the inventory table in CLAUDE.md. The table is no longer hand-maintained prose — a new live-write surface cannot merge without either a hop 2->3 executor or an explicit, recorded reason it has none.",
+  "_why": "Rule 13 was written from the newest tool, and on the day it was written 3 of the 4 tools it named did not satisfy its own --check requirement, while six further 3-hop surfaces were not in the table at all. Undetectable drift reads exactly like no drift.",
+  "_contract": "executor != null  =>  the module must expose --check and exit non-zero on drift (scripts/_core/hop3_drift.py owns that mapping). executor == null => unguarded_reason is REQUIRED and states the blast radius, so the gap is disclosed rather than silently absent.",
+  "surfaces": [
+    {
+      "id": "article-css",
+      "artifact": "Article CSS",
+      "hop1": "scripts/build/article_css_generator.py",
+      "hop2": "projects/{slug}/brand/article-css.css",
+      "hop3": "<style> block inlined in each published post",
+      "executor": "scripts.wordpress.reinject_article_css",
+      "in_claude_md_table": true
+    },
+    {
+      "id": "style-tokens",
+      "artifact": "Style tokens",
+      "hop1": "scripts/_core/style_tokens.py",
+      "hop2": "per-project HMAC token map",
+      "hop3": "class names inside each published body",
+      "executor": "scripts.wordpress.reinject_style_tokens",
+      "in_claude_md_table": true
+    },
+    {
+      "id": "cta-placement",
+      "artifact": "CTA placement",
+      "hop1": "CTA builder + templates",
+      "hop2": "cta-draft.json",
+      "hop3": "shortcode position in each post",
+      "executor": "scripts.wordpress.reinject_cta_placement",
+      "in_claude_md_table": true
+    },
+    {
+      "id": "blog-sidebars",
+      "artifact": "Blog sidebars",
+      "hop1": "scripts/build/blog_sidebar_generator.py + templates/blog-sidebars.*.tpl",
+      "hop2": "projects/{slug}/brand/blog-sidebars.{php,css}",
+      "hop3": "mu-plugin file on the WP host + WPCode CSS snippet",
+      "executor": "scripts.wordpress.deploy_blog_sidebars",
+      "in_claude_md_table": true
+    },
+    {
+      "id": "jsonld-graph",
+      "artifact": "JSON-LD @graph inlined in every published post",
+      "hop1": "scripts/build/schema_jsonld_builder.py",
+      "hop2": "projects/{slug}/business-context.json (company, brand_name, site_url)",
+      "hop3": "<script type=application/ld+json> frozen into post content",
+      "executor": "scripts.wordpress.check_post_drift",
+      "in_claude_md_table": true,
+      "scope_correction": "The audit ranked this the highest-blast-radius gap on the premise that org identity is frozen into every post body. Verified false on 2026-08-05: on projects where RankMath emits Organization in the document HEAD, the pipeline deliberately skips that type, and the head node renders LIVE from WP options — so it is not a 3-hop artifact there and updates itself. project-alpha's bodies carry FAQPage + ItemList only. The checker therefore treats an ABSENT org node as 'not applicable', and only compares values where a project genuinely bakes one in. Reporting absence as drift would have fired on every post of every such project."
+    },
+    {
+      "id": "mu-plugin-bridges",
+      "artifact": "MU-plugin REST bridges on ~13 hosts",
+      "hop1": "install/wordpress-mu-plugin/*.php",
+      "hop2": "(none — shipped as-is)",
+      "hop3": "file copied into wp-content/mu-plugins on each host",
+      "executor": "scripts.wordpress.check_mu_plugin_drift",
+      "in_claude_md_table": true,
+      "verified": "Live 2026-08-05: rank-math bridge in sync on all 13 hosts. Reads bridge_version over REST, so it needs no shell access. A bridge for an SEO plugin the site does not run is not_applicable, NOT not_deployed — the first run reported the Yoast bridge missing on all 13 projects, which is noise, because the fleet runs RankMath."
+    },
+    {
+      "id": "article-signature",
+      "artifact": "Article signature wording / byline",
+      "hop1": "scripts/build/finalize_refs_signature.py",
+      "hop2": "business-context.json :: article_signature",
+      "hop3": "<p class=article-signature> frozen into each post",
+      "executor": "scripts.wordpress.check_post_drift",
+      "in_claude_md_table": true,
+      "verified": "Live sweep 2026-08-05 found real drift the fleet could not previously see: loamwright 44/56, project-hotel 21/32, project-charlie 12/106 published posts carry signature wording that no longer matches the configured template; project-alpha 3/3 in sync. Detection only — repair is a separate deliberate act."
+    },
+    {
+      "id": "internal-links",
+      "artifact": "Internal links baked into post bodies",
+      "hop1": "linker agent + brand link-map",
+      "hop2": "projects/{slug}/brand/links-map.json",
+      "hop3": "<a> hrefs inside each published body",
+      "executor": "scripts.wordpress.check_link_drift",
+      "in_claude_md_table": true,
+      "verified": "Live 2026-08-05: project-alpha and loamwright in sync. Scope is deliberately narrow: a body linking somewhere the map does not list is EDITORIAL, not drift; the finding that matters is a link that no longer resolves. Enumeration is a pre-filter only — the verdict comes from an actual HTTP status, after the first run called three WooCommerce product URLs dead because /wp/v2/product was not in the enumeration list."
+    },
+    {
+      "id": "cta-skus",
+      "artifact": "CTA copy and [products ids=...] SKUs",
+      "hop1": "CTA builder",
+      "hop2": "cta-draft.json + product-catalog.json",
+      "hop3": "shortcode arguments inside each post",
+      "executor": "scripts.wordpress.check_post_drift",
+      "in_claude_md_table": true
+    },
+    {
+      "id": "term-meta",
+      "artifact": "Category / tag term meta",
+      "hop1": "categories-config.json / tags-config.json templates",
+      "hop2": "projects/{slug}/*-config.json",
+      "hop3": "WP term description + rank_math_* meta",
+      "executor": "scripts.wordpress.check_term_drift",
+      "in_claude_md_table": true,
+      "verified": "Live 2026-08-05: loamwright 229 terms in sync. Compares description, name and rank_math_* per term instead of only term IDs; HTML-escaping and curly quotes are normalised away so ordinary round-tripping is not reported as drift."
+    }
+  ],
+  "_status": "All 10 known hop-3 surfaces are guarded as of v3.42.7 (2026-08-05). A new live-write surface must arrive with a --check executor or an explicit recorded reason it has none."
+}

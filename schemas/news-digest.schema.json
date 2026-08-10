@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "news-digest",
+  "type": "object",
+  "required": ["generated_at", "project_slug", "lookback_days", "series_keyword", "items", "connectors_run"],
+  "properties": {
+    "generated_at": {"type": "string"},
+    "project_slug": {"type": "string"},
+    "lookback_days": {"type": "integer"},
+    "series_keyword": {"type": "string"},
+    "theme_of_week": {"type": "string"},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cluster_id", "kind", "headline", "canonical_source", "published_at", "summary", "significance"],
+        "properties": {
+          "cluster_id": {"type": "string"},
+          "kind": {"enum": ["new", "follow_up"]},
+          "headline": {"type": "string"},
+          "canonical_source": {
+            "type": "object",
+            "required": ["name", "url", "domain"],
+            "properties": {
+              "name": {"type": "string"}, "url": {"type": "string"}, "domain": {"type": "string"}
+            }
+          },
+          "corroborating_sources": {
+            "type": "array",
+            "items": {"type": "object", "required": ["name", "url"],
+                      "properties": {"name": {"type": "string"}, "url": {"type": "string"}}}
+          },
+          "published_at": {"type": "string"},
+          "summary": {"type": "string"},
+          "suggested_angle": {"type": "string"},
+          "significance": {"type": "number"},
+          "entities": {"type": "array", "items": {"type": "string"}},
+          "topic_tags": {"type": "array", "items": {"type": "string"}},
+          "enrichment": {
+            "type": ["object", "null"],
+            "properties": {"stat": {"type": "string"}, "value": {"type": "string"}, "source_url": {"type": "string"}}
+          },
+          "follow_up_of": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "rejected_competitor_domains": {"type": "array", "items": {"type": "string"}},
+    "connectors_run": {
+      "type": "array",
+      "items": {"type": "object", "required": ["name", "hits", "status"],
+                "properties": {"name": {"type": "string"}, "hits": {"type": "integer"},
+                               "status": {"enum": ["ok", "degraded", "skipped"]}}}
+    }
+  }
+}

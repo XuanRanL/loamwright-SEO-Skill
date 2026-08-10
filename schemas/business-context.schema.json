@@ -1,0 +1,764 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/business-context.schema.json",
+  "title": "Project Business Context",
+  "description": "Per-project business context. Stored at projects/{slug}/business-context.json. Read by every skill to inherit voice, audience, location, YMYL, publish policy. Schema added 2026-05-22 (v5.0 Stage B) — was referenced by projects but never validated. Strictness is intentionally lenient on existing fields to avoid breaking legacy projects; new fields under `location.*` formalize the 5-archetype + 3-tier schema-mapping model from references/local/industry-to-schema-mapping.md.",
+  "type": "object",
+  "required": [
+    "site_slug",
+    "site_url"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "site_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Lowercase kebab-case. Matches projects/{slug}/ directory name."
+    },
+    "site_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "industry": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "primary": {
+              "type": "string"
+            },
+            "secondary": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "usage_type": {
+      "type": "string"
+    },
+    "location": {
+      "type": "object",
+      "description": "Geographic + business-archetype context. v5.0 Stage B added the business_archetype + business_category + schema_org_type + local_article_pattern fields, which drive schema-generator's auto-selection. See references/local/industry-to-schema-mapping.md for the canonical model.",
+      "additionalProperties": true,
+      "properties": {
+        "country": {
+          "type": "string",
+          "description": "ISO 3166-1 alpha-2 country code"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "business_archetype": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "description": "v5.0 Stage B. A=local brick-and-mortar; B=service-area business; C=multi-location chain; D=national ecommerce; E=pure SaaS / online service. Determines schema shape (LocalBusiness vs Organization, single vs chain, areaServed vs spatialCoverage). See references/local/industry-to-schema-mapping.md §1."
+        },
+        "business_category": {
+          "type": "string",
+          "description": "v5.0 Stage B. Free-text industry slug. Tier 1 closed-enum values (e.g. 'plumber', 'dentist', 'restaurant') resolve deterministically. Tier 2 values trigger a soft warning. Tier 3 (anything else) requires manual schema_org_type override. See industry-to-schema-mapping.md §2."
+        },
+        "schema_org_type": {
+          "type": "string",
+          "description": "v5.0 Stage B. The Schema.org @type leaf the publisher's schema-generator emits (e.g. 'Dentist', 'OnlineStore', 'LegalService', 'Organization'). Auto-filled by Tier 1/2 resolution; required manually for Tier 3. Wins over archetype default when present."
+        },
+        "additional_type": {
+          "type": "string",
+          "description": "v5.0 Stage B. Optional. Schema.org additionalType (URL or ProductOntology) for industries without a native Schema.org leaf. Example: 'https://www.productontology.org/id/Horticultural_lighting' for cannabis B2B equipment."
+        },
+        "local_article_pattern": {
+          "type": "string",
+          "enum": [
+            "service_area",
+            "spatial_coverage"
+          ],
+          "description": "v5.0 Stage B. Schema pattern for '[keyword] [location]' articles. service_area = Service.areaServed (true geographic service; archetype A/B/C default). spatial_coverage = Article.spatialCoverage + about + mentions (Wirecutter pattern; archetype D/E default — writing ABOUT a place vs serving it). See industry-to-schema-mapping.md §4."
+        },
+        "ymyl_flag": {
+          "type": "boolean",
+          "description": "v5.0 Stage B. True if business is YMYL (medical, legal, financial, news-current-events). Triggers additional Schema.org credentials + lastReviewed + Person.hasCredential emissions."
+        },
+        "service_areas": {
+          "type": "object",
+          "description": "v5.0 Stage B. Geographic scope of business operations.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "national",
+                "regional",
+                "city-only",
+                "global"
+              ]
+            },
+            "primary_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "secondary_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "excluded_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "city_priority": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "rank": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "nap": {
+          "type": "object",
+          "description": "v5.0 Stage B. Name + Address + Phone for LocalBusiness schema. Optional — when absent, the schema-generator falls back to opportunistic mode (omits LocalBusiness emission). NEVER fabricate.",
+          "properties": {
+            "business_name": {
+              "type": "string"
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "streetAddress": {
+                  "type": "string"
+                },
+                "addressLocality": {
+                  "type": "string"
+                },
+                "addressRegion": {
+                  "type": "string"
+                },
+                "postalCode": {
+                  "type": "string"
+                },
+                "addressCountry": {
+                  "type": "string"
+                }
+              }
+            },
+            "telephone": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "nap_consistency_verified_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "gbp": {
+          "type": "object",
+          "description": "v5.0 Stage B. Google Business Profile reference. Optional — when present, becomes sameAs link in schema.",
+          "properties": {
+            "profile_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "place_id": {
+              "type": "string"
+            },
+            "verified": {
+              "type": "boolean"
+            },
+            "primary_category": {
+              "type": "string"
+            }
+          }
+        },
+        "shipping": {
+          "type": "object",
+          "description": "v5.0 Stage B. Ecommerce / physical-goods shipping context. Drives Product.offers.shippingDetails.",
+          "properties": {
+            "warehouse_locations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "shipping_zones": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "lead_time_by_state": {
+              "type": "object"
+            }
+          }
+        },
+        "local_seo_mode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "opportunistic",
+            "primary_strategy"
+          ],
+          "default": "off",
+          "description": "v5.0 Stage B. off = no local SEO routing even on keyword+location queries. opportunistic = route to local-* template when geo modifier detected (default for projects with full location.*). primary_strategy = aggressive local content (multi-state pillars + city pages by default)."
+        },
+        "local_authority_links_by_state": {
+          "type": "object",
+          "description": "v5.0 Stage B. Per-state map of authoritative outbound link URLs (trade associations, regulators, press). Used by writer agents for credible local-content outbound linking.",
+          "patternProperties": {
+            "^[A-Z]{2}$": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      }
+    },
+    "voice_default": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "pair": {
+          "description": "Voice register pair. Accepts EITHER a 2-element array [\"warm\", \"technical\"] OR a single slash-joined string \"warm / technical\". scripts/validate/title_validator.infer_register() reads both shapes (isinstance list/str) and several projects (project-juliet/project-kilo/project-hotel) legitimately use the string form, so both are valid (schema loosened 2026-07-09, v3.38 Task 7 — was array-only, which failed those three projects on a field the code already handled).",
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ratios": {
+          "type": "object"
+        }
+      }
+    },
+    "anchor_links": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "publish_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "publish",
+            "private"
+          ]
+        }
+      }
+    },
+    "mandatory_sections": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "citation_source_policy": {
+      "type": "object",
+      "description": "Competitor/peer-domain citation guard (added 2026-06-20). When present and enabled, competitor websites are excluded from in-text citations, the References list, body outbound links, and JSON-LD citation/sameAs. Enforced by scripts/_core/competitor_domains.py across the whole pipeline. Absent or exclude_competitor_domains=false or enforcement=off → fully disabled (backward compatible). See root CLAUDE.md Rule 8 + docs/superpowers/specs/2026-06-20-competitor-citation-exclusion-design.md.",
+      "additionalProperties": true,
+      "properties": {
+        "enforcement": {
+          "type": "string",
+          "enum": [
+            "hard_veto",
+            "warn",
+            "off"
+          ]
+        },
+        "exclude_competitor_domains": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "in_text_citations",
+              "references",
+              "outbound_links",
+              "schema_citation"
+            ]
+          }
+        },
+        "do_not_cite_domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "competitor_brands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allow_brand_mention_in_prose": {
+          "type": "boolean"
+        },
+        "datasheet_exception": {
+          "type": "boolean"
+        },
+        "sole_source_behavior": {
+          "type": "string",
+          "enum": [
+            "research_replacement",
+            "drop_claim",
+            "strip_citation_only"
+          ]
+        },
+        "serp_candidate_review": {
+          "type": "boolean"
+        }
+      }
+    },
+    "cta": {
+      "type": "object",
+      "description": "Designed CTA module config (v3.34, 2026-07-04). Consumed by scripts/optimize/cta_injector.py (mandatory 'cta-injection' stage): injects '### {heading}' + one variant paragraph as a styled .xr-cta-box conversion card. Absent or enabled=false → full no-op (backward compatible). The heading MUST be classifiable by scripts/_core/component_headings COMPONENTS['cta'] or the publisher will never tag it. Verified live by verify_post check 29.",
+      "additionalProperties": true,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "placements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "mid",
+              "end"
+            ]
+          },
+          "description": "mid = after the content section at the ~35% word mark; end = before Further Reading/References (BOFU slot). DEFAULT (v3.41.5, operator decision 2026-07-24): [\"mid\"] — the product grid + CTA belong in the article's front-middle, not the end. 'end' remains a legal value for backward compatibility but NO project or format uses it: the last exception (weekly-digest) was retired 2026-07-25. tests/test_cta_placement_mid_default_seam.py pins the code default, every project config, and the no-end rule."
+        },
+        "heading": {
+          "type": "string"
+        },
+        "target_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "format_rules": {
+          "type": "object",
+          "description": "v3.35.1: per-format placement override — {format_id: [placements]}. Formats not listed use the global placements. Since 2026-07-25 NO rule may carry \"end\" (the weekly-digest end exception was retired; the fleet test enforces this) — use this only to NARROW to [\"mid\"] or to disable a format via [].",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mid",
+                "end"
+              ]
+            }
+          }
+        },
+        "variants": {
+          "type": "object",
+          "description": "Per-placement copy variants; the injector rotates deterministically by task_id. Each text = ONE markdown paragraph with ≥1 markdown link. No em-dashes (sanitized to commas), no UTM on internal links (GA4 self-referral).",
+          "properties": {
+            "mid": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "text"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "end": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "text"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "conversion_offers": {
+      "type": "object",
+      "description": "Business-model-aware conversion-offer catalog consumed by scripts/optimize/cta_brief_builder.py (Step 1 of the cta-writer pipeline). Absent = old static cta.variants path runs unchanged.",
+      "additionalProperties": true,
+      "properties": {
+        "business_model": {
+          "type": "string",
+          "enum": [
+            "b2b_services",
+            "ecommerce"
+          ]
+        },
+        "services": {
+          "type": "array",
+          "description": "b2b_services only. One entry per service page.",
+          "items": {
+            "type": "object",
+            "required": [
+              "slug",
+              "url",
+              "positioning"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "positioning": {
+                "type": "string"
+              },
+              "persona": {
+                "type": "string"
+              },
+              "distinct_value_prop": {
+                "type": "string"
+              },
+              "own_page_cta_copy": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "category_routing_map": {
+          "type": "string",
+          "description": "b2b_services only. Path to the project's machine-readable blog-category -> service lookup JSON."
+        },
+        "catalog_path": {
+          "type": "string",
+          "description": "ecommerce only (v3.38). Optional override for the product-catalog.json path read by cta_brief_builder.py's ecommerce resolver. Plugin-root-relative or absolute. Defaults to projects/{slug}/product-catalog.json."
+        },
+        "default_category": {
+          "type": "string",
+          "description": "ecommerce only (v3.38). Product-category slug (or human name) used as the fallback when no SKU or category token-match resolves. Must exist in the synced catalog with count>0 to be used, else the brief degrades to a link-only (no-shortcode) shop CTA."
+        },
+        "fallback_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "ecommerce only (v3.38). Shop/collection URL used as the brief's target_url (WooCommerce category permalinks are not present in the cached catalog). Null target_url is tolerated by verify_post check 29 because the shortcode, not the link, is the conversion element."
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Per-project cta-writer/tone constraints, copied verbatim into cta-brief.json and read by the cta-writer dispatch + tone gate. Known keys below; any additional keys pass through.",
+          "properties": {
+            "no_person_blocks": {
+              "type": "boolean"
+            },
+            "tone": {
+              "type": "string"
+            },
+            "banned_phrases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "company": {
+      "type": "object",
+      "description": "Company identity and team/proof-points for byline authority signals.",
+      "additionalProperties": true,
+      "properties": {
+        "founder": {
+          "type": "string"
+        },
+        "years_operating": {
+          "type": "integer"
+        },
+        "team": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "role"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "photo_media_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "specialty_services": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "proof_points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "case_study",
+                  "stat"
+                ]
+              },
+              "subject": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "period": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "claim": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "wordpress": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "host_access": {
+          "type": "object",
+          "description": "Shell access to the WordPress FILESYSTEM, for hop 2->3 artifacts that are files on the host rather than REST resources (currently the blog-sidebars mu-plugin). Without it scripts.wordpress.deploy_blog_sidebars reports 'manual' with exact steps rather than guessing at a transport — it never silently skips. Contains no credentials: `ssh` is an ssh-config host alias, so the key stays in the ssh agent.",
+          "properties": {
+            "ssh": {
+              "type": "string",
+              "description": "ssh config host alias, e.g. 'xuanran-srv'"
+            },
+            "container": {
+              "type": "string",
+              "description": "docker container name, e.g. 'examplecom-wordpress-1'"
+            },
+            "mu_plugins": {
+              "type": "string",
+              "description": "absolute mu-plugins path in the container",
+              "default": "/var/www/html/wp-content/mu-plugins"
+            }
+          },
+          "required": [
+            "ssh",
+            "container"
+          ]
+        }
+      }
+    },
+    "featured_image_inline_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "image_pipeline_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "configured_at": {
+      "type": "string"
+    },
+    "config_version": {
+      "type": "string"
+    },
+    "config_version_history": {
+      "type": "array"
+    },
+    "blog_sidebars": {
+      "type": "object",
+      "description": "Blog sidebar config (v3.42.4). Consumed by scripts/build/blog_sidebar_generator.py, which renders projects/{slug}/brand/blog-sidebars.php (an mu-plugin registering two widget areas) + blog-sidebars.css. Two DIFFERENT sidebars by design: the blog index helps a reader FIND (its own Categories widget first), the single post PROMOTES (image-led CTA card, products, other pages). Absent or enabled=false -> nothing is generated and the theme's existing sidebar is untouched. The generator never edits the theme's shared widget area.",
+      "additionalProperties": true,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "class_prefix": {
+          "type": "string",
+          "default": "xrsb",
+          "description": "CSS/PHP namespace. MUST be added to any Remove-Unused-CSS safelist (FlyingPress/Perfmatters/LiteSpeed) or the stylesheet is stripped in production while looking fine to a logged-in admin."
+        },
+        "index_modules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "categories",
+              "cta_card",
+              "products",
+              "page_promo"
+            ]
+          },
+          "description": "Order top-to-bottom on the blog index. Default ['categories','cta_card','products','page_promo']."
+        },
+        "post_modules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "categories",
+              "cta_card",
+              "products",
+              "page_promo"
+            ]
+          },
+          "description": "Order top-to-bottom on a single post. Default ['cta_card','products','page_promo'] — promotional, no navigation."
+        },
+        "product_category": {
+          "type": "string",
+          "description": "Product category slug for the promo module. Falls back to conversion_offers.default_category."
+        },
+        "excluded_product_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Never merchandised from editorial content. MERGED with conversion_offers.excluded_categories and hard-blocked in the widget, so a sidebar cannot become a second route to a regulated/prescription line."
+        },
+        "product_limit_post": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "default": 2
+        },
+        "product_limit_index": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "default": 4
+        },
+        "promo_pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Pages the page-promo module pushes when there is nothing contextual (on an article it prefers sibling guides). Derived from anchor_links when omitted."
+        },
+        "cta_post": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "CTA card on articles: {kicker,title,btn,url,img}. img is a WP attachment ID. A card missing url or title renders nothing."
+        },
+        "cta_index": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "CTA card on the blog index. Same shape as cta_post."
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional colour overrides (primary/accent/accent_dark/surface/surface_2/ink/muted). Otherwise resolved from brand-identity brand_visuals, then brand-config colors."
+        },
+        "heading_font": {
+          "type": "string"
+        },
+        "body_font": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

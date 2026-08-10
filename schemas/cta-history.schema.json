@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cta-history.schema.json",
+  "title": "CTA cross-article diversity history (project-level, rolling)",
+  "type": "object",
+  "required": ["entries"],
+  "properties": {
+    "entries": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["task_id", "heading", "hook_prefix", "recorded_at"],
+        "properties": {
+          "task_id": {"type": "string"},
+          "placement": {"type": "string", "enum": ["mid", "end"]},
+          "heading": {"type": "string"},
+          "hook_prefix": {"type": "string", "description": "first ~8 words of the block's body text, lowercased"},
+          "blocks_used": {"type": "array", "items": {"type": "string"}},
+          "recorded_at": {"type": "string"}
+        }
+      }
+    }
+  }
+}

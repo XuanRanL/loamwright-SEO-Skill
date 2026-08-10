@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://xuanran-seo.dev/schemas/categories-config.schema.json",
+  "title": "WordPress Categories Config",
+  "description": "Source-of-truth config for a project's WordPress blog category taxonomy. Applied by scripts/wordpress/setup_categories.py.",
+  "type": "object",
+  "required": ["site_slug", "version", "categories"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "site_slug": {
+      "type": "string",
+      "description": "Project slug. Must match projects/{slug}/ directory name and WP credentials filename.",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+    },
+    "version": {"type": "string", "description": "Config schema version. Current: '1.0' or '1.1'."},
+    "generated_at": {"type": "string", "description": "ISO date when this config was last edited."},
+    "note": {"type": "string", "description": "Free-text editorial note."},
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/category"}
+    },
+    "_design_notes": {"type": "object", "description": "Optional editorial commentary for human readers; not used by the script."}
+  },
+  "definitions": {
+    "category": {
+      "type": "object",
+      "required": [
+        "slug", "name", "parent", "description",
+        "rank_math_title", "rank_math_description", "rank_math_focus_keyword", "rank_math_robots"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Globally-unique WordPress category slug. Use parent-prefixed naming (e.g. 'lighting-buyer-guides') to avoid global collision.",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name shown in WP admin, breadcrumbs, and menus. Can repeat across parents (e.g. 'Buyer Guides' under both Lighting and Climate Control) — only the slug must be unique.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "parent": {
+          "oneOf": [
+            {"type": "null", "description": "Top-level category"},
+            {"type": "string", "description": "Slug of the parent category. The setup script resolves this to the WP integer ID at apply time."}
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "Plain-prose description shown on the archive page above the post grid. 35-80 words. NO HTML, NO inline links, NO inside-baseball language. See subskills/init/wordpress-category-setup/references/category-description-style-guide.md.",
+          "minLength": 30
+        },
+        "rank_math_title": {
+          "type": "string",
+          "description": "SEO title for the archive page. 50-60 chars (Google display limit ~60). Format: '{Category Name}: {Differentiating Phrase} | {Brand Name}'.",
+          "minLength": 10,
+          "maxLength": 80
+        },
+        "rank_math_description": {
+          "type": "string",
+          "description": "Meta description for the archive page. 150-160 chars max. Focus keyword in first 120 chars.",
+          "minLength": 50,
+          "maxLength": 165
+        },
+        "rank_math_focus_keyword": {
+          "type": "string",
+          "description": "Comma-separated focus keywords (1-3) that this archive page targets. First keyword should appear in title + description + first sentence of description body.",
+          "minLength": 3
+        },
+        "rank_math_robots": {
+          "type": "array",
+          "description": "Robots directives for the archive page. Almost always ['index']. 'follow' is NOT a valid enum member; use 'index' (follow is implicit).",
+          "items": {
+            "type": "string",
+            "enum": ["index", "noindex", "nofollow", "noarchive", "noimageindex", "nosnippet"]
+          }
+        },
+        "rank_math_canonical_url": {"type": "string", "description": "Optional. Override canonical URL. Default = the archive URL itself."},
+        "rank_math_facebook_title": {"type": "string"},
+        "rank_math_facebook_description": {"type": "string"},
+        "rank_math_facebook_image": {"type": "string", "description": "Optional OG image URL"},
+        "rank_math_twitter_card_type": {
+          "type": "string",
+          "enum": ["summary", "summary_large_image", "app", "player"]
+        },
+        "rank_math_twitter_title": {"type": "string"},
+        "rank_math_twitter_description": {"type": "string"},
+        "rank_math_twitter_image": {"type": "string", "description": "Optional Twitter card image URL"},
+        "$comment": {"type": "string", "description": "Optional editorial comment for human readers."}
+      },
+      "additionalProperties": false
+    }
+  }
+}

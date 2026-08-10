@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-prompts.schema.json",
+  "title": "image-prompts",
+  "description": "Image-generation prompt set for one article. `prompts` MUST be a JSON ARRAY of objects, each carrying a slot_id. It must NEVER be an object keyed by slot_id ({\"cover\": {...}}) — that shape silently broke chart-render, real-photo sourcing, the image-placeholder lint, and the publish gate before 2026-06-29. The schema-validate hook blocks a dict-shaped write at the source.",
+  "oneOf": [
+    { "type": "array", "items": { "$ref": "#/$defs/prompt" } },
+    {
+      "type": "object",
+      "required": ["prompts"],
+      "properties": {
+        "prompts": { "type": "array", "items": { "$ref": "#/$defs/prompt" } }
+      }
+    }
+  ],
+  "$defs": {
+    "prompt": {
+      "type": "object",
+      "required": ["slot_id"],
+      "properties": {
+        "slot_id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["photo", "chart"] }
+      }
+    }
+  }
+}

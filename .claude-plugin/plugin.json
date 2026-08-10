@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin",
+  "name": "xuanran-seo-blog-writer",
+  "version": "3.42.10",
+  "description": "Production-grade SEO + GEO content factory + full website audit. Research → write → publish → monitor. 8 skills + 67 subskills, 34 agents, 230+ scripts. Optimized for Google + AI search (ChatGPT/Perplexity/Claude/Gemini) dual front. WordPress auto-publish with gpt-image-2 image generation. Full-site SEO audit with 15 specialist agents.",
+  "author": {
+    "name": "Loamwright (沃匠)",
+    "email": "XuanRanL@users.noreply.github.com"
+  },
+  "homepage": "https://loamwrightseo.com",
+  "repository": "https://github.com/XuanRanL/loamwright-SEO-Skill",
+  "license": "Apache-2.0",
+  "keywords": [
+    "seo",
+    "geo",
+    "blog",
+    "content-marketing",
+    "ai-search",
+    "wordpress",
+    "openai",
+    "gpt-image-2",
+    "tavily",
+    "anthropic",
+    "claude",
+    "featured-snippet",
+    "schema-jsonld"
+  ],
+  "skills": [
+    "./skills",
+    "./subskills/build",
+    "./subskills/cross-cutting",
+    "./subskills/image",
+    "./subskills/init",
+    "./subskills/monitor",
+    "./subskills/optimize",
+    "./subskills/plan",
+    "./subskills/publish",
+    "./subskills/research"
+  ]
+}

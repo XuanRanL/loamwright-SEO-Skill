@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""
+bin/update-check — Check for plugin updates from marketplace.
+
+Output (stdout): one line with one of:
+    UPGRADE_AVAILABLE <local_ver> <remote_ver>
+    JUST_UPGRADED <previous_ver> <current_ver>
+    UP_TO_DATE
+    (empty if check failed or snoozed)
+
+Caches result in ~/.xuanran-seo/last-update-check (1-hour TTL).
+Respects ~/.xuanran-seo/update-snoozed (skip if file exists and not expired).
+
+Usage:
+    bin/update-check                  # normal check
+    bin/update-check --force          # ignore cache
+    bin/update-check --snooze <days>  # snooze for N days
+"""
+import argparse
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+CACHE_DIR = Path.home() / ".xuanran-seo"
+CACHE_FILE = CACHE_DIR / "last-update-check"
+SNOOZE_FILE = CACHE_DIR / "update-snoozed"
+JUST_UPGRADED_MARKER = CACHE_DIR / "just-upgraded-from"
+CACHE_TTL_SECONDS = 3600  # 1 hour
+
+# Marketplace URL — replace with actual when published
+MARKETPLACE_URL = "https://raw.githubusercontent.com/xuanran/seo-blog-writer/main/VERSION"
+
+VERSION_RE = re.compile(r"^[0-9]+(\.[0-9]+){1,2}$")
+
+
+def find_plugin_dir() -> Path:
+    """Locate plugin root by walking up looking for VERSION file."""
+    p = Path(__file__).resolve().parent.parent
+    while p != p.parent:
+        if (p / "VERSION").exists() and (p / ".claude-plugin").is_dir():
+            return p
+        p = p.parent
+    raise SystemExit("ERROR: cannot find plugin root with VERSION + .claude-plugin/")
+
+
+def read_local_version(plugin_dir: Path) -> str:
+    v = (plugin_dir / "VERSION").read_text(encoding="utf-8").strip()
+    if not VERSION_RE.match(v):
+        raise SystemExit(f"ERROR: invalid local VERSION format: {v!r}")
+    return v
+
+
+def fetch_remote_version() -> str | None:
+    try:
+        import httpx
+        r = httpx.get(MARKETPLACE_URL, timeout=5.0, follow_redirects=True)
+        r.raise_for_status()
+        v = r.text.strip()
+        return v if VERSION_RE.match(v) else None
+    except Exception:
+        return None
+
+
+def cache_valid() -> dict | None:
+    if not CACHE_FILE.exists():
+        return None
+    try:
+        data = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        if time.time() - data.get("checked_at", 0) < CACHE_TTL_SECONDS:
+            return data
+    except Exception:
+        pass
+    return None
+
+
+def save_cache(local_v: str, remote_v: str | None) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_FILE.write_text(json.dumps({
+        "checked_at": time.time(),
+        "local_version": local_v,
+        "remote_version": remote_v,
+    }), encoding="utf-8")
+
+
+def snooze_active() -> bool:
+    if not SNOOZE_FILE.exists():
+        return False
+    try:
+        data = json.loads(SNOOZE_FILE.read_text(encoding="utf-8"))
+        return time.time() < data.get("expires_at", 0)
+    except Exception:
+        return False
+
+
+def set_snooze(days: int) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    SNOOZE_FILE.write_text(json.dumps({
+        "expires_at": time.time() + days * 86400,
+        "set_at": time.time(),
+    }), encoding="utf-8")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Check for plugin updates")
+    ap.add_argument("--force", action="store_true", help="Ignore cache and snooze")
+    ap.add_argument("--snooze", type=int, metavar="DAYS", help="Snooze checks for N days")
+    args = ap.parse_args()
+
+    if args.snooze is not None:
+        set_snooze(args.snooze)
+        print(f"Update checks snoozed for {args.snooze} days")
+        return
+
+    plugin_dir = find_plugin_dir()
+    local_v = read_local_version(plugin_dir)
+
+    # Check just-upgraded marker
+    if JUST_UPGRADED_MARKER.exists():
+        try:
+            prev = JUST_UPGRADED_MARKER.read_text(encoding="utf-8").strip()
+            JUST_UPGRADED_MARKER.unlink()
+            print(f"JUST_UPGRADED {prev} {local_v}")
+            return
+        except Exception:
+            pass
+
+    if not args.force and snooze_active():
+        return  # silent
+
+    if not args.force:
+        cached = cache_valid()
+        if cached:
+            remote_v = cached.get("remote_version")
+        else:
+            remote_v = fetch_remote_version()
+            save_cache(local_v, remote_v)
+    else:
+        remote_v = fetch_remote_version()
+        save_cache(local_v, remote_v)
+
+    if remote_v is None:
+        return  # silent on fetch failure
+
+    if remote_v == local_v:
+        print("UP_TO_DATE")
+    else:
+        # Crude semver compare
+        try:
+            local_t = tuple(int(p) for p in local_v.split("."))
+            remote_t = tuple(int(p) for p in remote_v.split("."))
+            if remote_t > local_t:
+                print(f"UPGRADE_AVAILABLE {local_v} {remote_v}")
+        except Exception:
+            print(f"UPGRADE_AVAILABLE {local_v} {remote_v}")
+
+
+if __name__ == "__main__":
+    main()

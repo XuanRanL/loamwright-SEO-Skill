@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit-site-report.schema.json",
+  "title": "Website SEO Audit Module Output",
+  "description": "Schema for per-module audit results (modules/*.json)",
+  "type": "object",
+  "required": ["score", "findings"],
+  "properties": {
+    "module": {
+      "type": "string",
+      "description": "Module name (e.g., technical, content, schema)"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Module score (0-100)"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "message"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "category": {
+            "type": "string",
+            "description": "Sub-category within the module"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable description of the finding"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Specific data or URL supporting the finding"
+          },
+          "recommendation": {
+            "type": "string",
+            "description": "Actionable fix recommendation"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL where the issue was found (if page-specific)"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "pages_analyzed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_ms": {
+          "type": "integer"
+        }
+      }
+    },
+    "category_scores": {
+      "type": "object",
+      "description": "Sub-category breakdown scores",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "items_checked": { "type": "integer" },
+          "items_passed": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

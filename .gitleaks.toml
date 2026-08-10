@@ -1,0 +1,16 @@
+# Gitleaks config for this repo and its public export.
+# ONLY documentation placeholders may be allowlisted here — every entry must be
+# a string that could never be a real credential. Anything realistic-looking
+# gets FIXED IN THE DOC instead (precedent: a synthetic-but-realistic 32-hex
+# example was replaced with REPLACE-WITH-YOUR-32-CHAR-HEX-TOKEN, 2026-08-02).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documentation placeholders — self-evidently fake examples"
+regexes = [
+  '''YOUR_CF_API_TOKEN''',
+  '''REPLACE-WITH-[A-Z0-9-]+''',
+  '''username:app_pwd''',
+]

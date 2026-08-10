@@ -1,0 +1,57 @@
+{
+  "$schema": "../../../../schemas/categories-config.schema.json",
+  "$comment": "Template starter for projects/{slug}/categories-config.json. Copy this file to projects/{slug}/categories-config.json and fill in the values. Validate against category-design-principles.md (one subcategory = one intent; no faceted dimensions as subcategories; 5-10 top-level; 2 levels deep; descriptions 35-80w plain prose).",
+
+  "site_slug": "REPLACE-WITH-PROJECT-SLUG",
+  "version": "1.0",
+  "generated_at": "YYYY-MM-DD",
+  "note": "Free-text editorial note. Reference the design doc if one exists (e.g. projects/{slug}/content-taxonomy.md).",
+
+  "categories": [
+    {
+      "$comment": "TOP-LEVEL EXAMPLE — duplicate this block for each of your 5-10 top-level categories. parent=null marks it as a top-level. Description 40-60w, no HTML, no inline links.",
+      "slug": "EXAMPLE-TOP-LEVEL",
+      "name": "Example Top-Level Category",
+      "parent": null,
+      "description": "Two-sentence plain-prose description, 40-60 words. Sentence 1 = what kind of content + target persona. Sentence 2 = 2-3 specific topic markers + credibility-grounding clause. No HTML. No inline links. No inside-baseball ('E-E-A-T anchor', 'engineering pillar that anchors content', etc.).",
+      "rank_math_title": "Category Name: Differentiating Phrase | Brand Name",
+      "rank_math_description": "150-160 character meta description. Focus keyword in first 120 chars. Plain text, no HTML.",
+      "rank_math_focus_keyword": "primary keyword, secondary keyword, tertiary keyword",
+      "rank_math_robots": ["index"],
+      "rank_math_facebook_title": "Shorter OG title for social sharing",
+      "rank_math_facebook_description": "Shorter OG description (110-130 chars) for Facebook/LinkedIn shares",
+      "rank_math_twitter_card_type": "summary_large_image",
+      "rank_math_twitter_title": "Shorter Twitter card title",
+      "rank_math_twitter_description": "Shorter Twitter card description (110-130 chars)"
+    },
+    {
+      "$comment": "SUBCATEGORY EXAMPLE — parent=slug-of-the-top-level (NOT the integer WP id; the setup script resolves IDs from slugs at apply time). Description 35-50w. Single primary intent (Informational / Commercial-Investigation / Transactional). Subcategories ARE content-type axes, NOT facets — do not create 'by-wattage' or 'by-crop' subcategories; use tags for those.",
+      "slug": "EXAMPLE-TOP-LEVEL-buyer-guides",
+      "name": "Buyer Guides",
+      "parent": "EXAMPLE-TOP-LEVEL",
+      "description": "Single-product decision content for [PRODUCT FAMILY] — by [ATTRIBUTE], [ATTRIBUTE], and use case. Evaluation criteria: [SPECIFIC SPEC 1], [SPECIFIC SPEC 2], [SPECIFIC SPEC 3], and warranty terms.",
+      "rank_math_title": "Best [PRODUCT FAMILY] Buyer Guides | Brand Name",
+      "rank_math_description": "Single-product [PRODUCT FAMILY] buyer guides by [ATTRIBUTE], form factor, and use case. [Brand-specific differentiator].",
+      "rank_math_focus_keyword": "[product family] buyer guide, best [product family]",
+      "rank_math_robots": ["index"],
+      "rank_math_facebook_title": "[PRODUCT FAMILY] Buyer Guides",
+      "rank_math_facebook_description": "Single-product [PRODUCT FAMILY] buyer guides by attribute, form factor, and use case.",
+      "rank_math_twitter_card_type": "summary_large_image",
+      "rank_math_twitter_title": "[PRODUCT FAMILY] Buyer Guides",
+      "rank_math_twitter_description": "Buyer guides by [ATTRIBUTE], form factor, and use case for [target persona]."
+    }
+  ],
+
+  "_design_notes": {
+    "intent_classification": "Every subcategory must map to exactly ONE primary intent. Informational = definitions/how-to/science/calculator/glossary. Commercial-Investigation = buyer guide/comparison/roundup. Transactional = product detail/pricing (typically lives in Woocommerce product_cat, not here).",
+    "content_types_not_facets": "Use subcategories for content TYPE (Buyer Guides, Comparisons, How-To, Calculators, Glossary, Deep Dives). Do NOT use them for faceted dimensions (wattage, crop, brand, region) — those are TAGS.",
+    "slug_uniqueness": "WordPress requires globally unique slugs. Use parent-prefixed slugs (e.g. 'lighting-buyer-guides', 'climate-buyer-guides') so 'Buyer Guides' under multiple parents doesn't collide.",
+    "description_length": "35-80 words. Plain prose. No HTML, no inline links. The post grid below the description already shows links to specific articles — duplicating them inline is cannibalization.",
+    "banned_phrases": "Do NOT use: 'E-E-A-T anchor', 'engineering pillar that anchors', 'topical authority', 'pillar-spoke', 'crawl budget', 'optimized for AI/search', 'demoted to lower-priority linking'. These are content-strategy terms that should not appear in user-facing copy.",
+    "see_also": [
+      "subskills/init/wordpress-category-setup/references/category-design-principles.md",
+      "subskills/init/wordpress-category-setup/references/category-description-style-guide.md",
+      "projects/project-charlie/categories-config.json (canonical reference example: 6 top-level + 29 subcategories)"
+    ]
+  }
+}

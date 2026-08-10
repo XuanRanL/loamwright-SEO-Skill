@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/citations.schema.json",
+  "title": "Citations & Fact-Check Output",
+  "description": "Output of fact-check-and-citation skill. Stored at memory/workspace/{task_id}/citations.json. Replaces [claim:cN_S] markers in section markdown with (Author, Year) format.",
+  "type": "object",
+  "required": ["refs", "in_text_replacements"],
+  "properties": {
+    "refs": {
+      "type": "array",
+      "maxItems": 10,
+      "description": "Final References section entries, APA 7 format",
+      "items": {
+        "type": "object",
+        "required": ["refkey", "apa", "resolved_status", "is_doi"],
+        "properties": {
+          "refkey": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+[0-9]{4}[a-z0-9]*$",
+            "description": "e.g. 'smith2023', 'lee2024b', 'doj2026reschedule', 'dea2026schedules'"
+          },
+          "apa": {
+            "type": "string",
+            "description": "Full APA 7 formatted reference string"
+          },
+          "doi": {
+            "type": ["string", "null"],
+            "pattern": "^https://doi.org/.+$"
+          },
+          "url": {
+            "type": ["string", "null"],
+            "format": "uri"
+          },
+          "domain": {
+            "type": ["string", "null"],
+            "description": "Registrable host of the source (e.g. 'doi.org', 'designlights.org'). Optional audit field added 2026-06-20 for the competitor-citation guard. Populated by the fact-checker so downstream layers can confirm no competitor domain slipped in."
+          },
+          "resolved_status": {
+            "type": ["integer", "string"],
+            "description": "HTTP status code from link_resolver.py HEAD check, or 'bot-403' marker when a .gov/.edu page is known to UA-block automated checks but resolves for human readers",
+            "minimum": 200,
+            "maximum": 599
+          },
+          "is_doi": {"type": "boolean"},
+          "source_type": {
+            "type": "string",
+            "enum": ["journal", "book", "book_chapter", "report", "news", "website", "preprint", "dataset", "government", "extension", "standard"]
+          },
+          "authors": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "year": {"type": "integer", "minimum": 1900, "maximum": 2100},
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Source authority. 1.0 = peer-reviewed journal, 0.7 = major publisher, 0.3 = blog"
+          }
+        }
+      }
+    },
+    "in_text_replacements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "pattern": "^\\[claim:c\\d+_[a-zA-Z0-9_]+\\]$"
+          },
+          "to": {
+            "type": "string",
+            "description": "(Author, Year) APA in-text format"
+          }
+        }
+      }
+    },
+    "deleted_claims": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Claims whose sources couldn't be verified after 3 retries; LLM rewrote text to remove the claim"
+    },
+    "rejected_competitor_domains": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Audit trail (added 2026-06-20): source URLs/domains the fact-checker discarded because they matched the project's citation_source_policy.do_not_cite_domains blocklist. Each entry was either re-sourced to a neutral authority or its claim was dropped. Empty/absent = no competitor source was encountered."
+    },
+    "unverified_count": {"type": "integer", "minimum": 0},
+    "lookup_sources": {
+      "type": "object",
+      "properties": {
+        "crossref_queries": {"type": "integer", "minimum": 0},
+        "tavily_extracts": {"type": "integer", "minimum": 0},
+        "head_checks": {"type": "integer", "minimum": 0}
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

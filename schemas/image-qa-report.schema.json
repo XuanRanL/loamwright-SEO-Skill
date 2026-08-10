@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "image-qa-report.schema.json",
+  "title": "Image Visual-QA Report",
+  "type": "object",
+  "required": ["task_id", "model", "rounds", "images", "summary", "_generated_by"],
+  "properties": {
+    "task_id": {"type": "string"},
+    "model": {"type": "string"},
+    "rounds": {"type": "integer", "minimum": 0, "maximum": 2},
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_id", "kind", "final_verdict", "final_score", "round_history"],
+        "properties": {
+          "slot_id": {"type": "string"},
+          "kind": {"enum": ["photo", "chart"]},
+          "final_verdict": {"enum": ["pass", "accept_with_warning"]},
+          "final_score": {"type": "integer", "minimum": 0, "maximum": 100},
+          "round_history": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["round", "score", "verdict", "defects"],
+              "properties": {
+                "round": {"type": "integer", "minimum": 0, "maximum": 2},
+                "score": {"type": "integer", "minimum": 0, "maximum": 100},
+                "verdict": {"enum": ["pass", "regenerate", "accept_with_warning"]},
+                "dimension_scores": {
+                  "type": "object",
+                  "properties": {
+                    "composition": {"type": "integer"},
+                    "subject_fidelity": {"type": "integer"},
+                    "text_render": {"type": "integer"},
+                    "brand_compliance": {"type": "integer"},
+                    "aesthetics": {"type": "integer"},
+                    "contrast": {"type": "integer"}
+                  }
+                },
+                "defects": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["code", "severity", "note"],
+                    "properties": {
+                      "code": {"pattern": "^(P([1-9]|10)|C[1-3])$"},
+                      "severity": {"enum": ["error", "warning"]},
+                      "note": {"type": "string"}
+                    }
+                  }
+                },
+                "regen_prompt_diff": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["passed", "regenerated", "accepted_with_warning"],
+      "properties": {
+        "passed": {"type": "integer"},
+        "regenerated": {"type": "integer"},
+        "accepted_with_warning": {"type": "integer"},
+        "total_regen_cost_usd": {"type": "number"},
+        "qa_cost_usd": {"type": "number"}
+      }
+    },
+    "_generated_by": {"const": "image-visual-qa-subagent"}
+  }
+}

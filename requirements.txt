@@ -1,0 +1,44 @@
+# Core HTTP & parsing
+httpx[http2]>=0.27.0,<1.0
+beautifulsoup4>=4.12.0,<5.0
+lxml>=5.0.0,<6.0
+markdown-it-py[plugins]>=3.0.0,<4.0
+feedparser>=6.0.0,<7.0     # RSS/Atom ingestion (weekly digest harvest)
+
+# Image processing
+Pillow>=11.0.0,<12.0
+piexif>=1.1.3,<2.0           # EXIF manipulation
+
+# JSON Schema validation
+jsonschema>=4.21.0,<5.0
+jsonschema-specifications>=2024.10.0
+
+# Web automation (Tier 2 of /init waterfall)
+patchright>=1.40.0           # Playwright anti-detection fork (Chromium only)
+
+# CLI / utilities
+click>=8.1.0,<9.0
+python-slugify>=8.0.0,<9.0
+pyyaml>=6.0.0,<7.0
+python-dotenv>=1.0.0,<2.0
+tenacity>=8.5.0,<9.0         # retry with backoff
+
+# AI/LLM SDKs
+anthropic>=0.40.0            # Claude Opus 4.7 support
+openai>=1.50.0               # gpt-image-2 + Batch API support
+google-genai>=0.4.0          # NEW Gemini SDK (NOT google-generativeai which is deprecated)
+tavily-python>=0.5.0         # Tavily Search + Extract
+
+# Google APIs (optional, monitoring phase)
+google-api-python-client>=2.130.0   # YouTube Data API v3, GSC, GA4
+google-auth>=2.30.0
+google-auth-oauthlib>=1.2.0
+
+# WordPress
+requests-toolbelt>=1.0.0     # MultipartEncoder for media upload
+
+# Async support
+aiofiles>=23.0.0,<25.0
+
+# Type & lint (kept here so contributors get them; CI installs from requirements-dev.txt)
+# See requirements-dev.txt for: pytest, mypy, ruff, etc.

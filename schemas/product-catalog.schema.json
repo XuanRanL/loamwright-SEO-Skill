@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "product-catalog.schema.json",
+  "title": "Product Catalog (WooCommerce sync — scripts/wordpress/wc_catalog_sync.py)",
+  "description": "Read-only cache of a project's live WooCommerce catalog (products + categories), written by wc_catalog_sync.py and consumed offline by cta_brief_builder.py's ecommerce resolver branch. Never hand-edited.",
+  "type": "object",
+  "required": [
+    "synced_at",
+    "project_slug",
+    "product_count",
+    "category_count",
+    "categories",
+    "products",
+    "_generated_by"
+  ],
+  "properties": {
+    "synced_at": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of when the sync ran."
+    },
+    "project_slug": {"type": "string"},
+    "product_count": {"type": "integer", "minimum": 0},
+    "category_count": {"type": "integer", "minimum": 0},
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "slug", "count"],
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "slug": {"type": "string"},
+          "count": {"type": "integer", "minimum": 0},
+          "parent": {"type": "integer"}
+        }
+      }
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "slug"],
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "slug": {"type": "string"},
+          "permalink": {"type": "string"},
+          "status": {"type": "string"},
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "name": {"type": "string"},
+                "slug": {"type": "string"}
+              }
+            }
+          },
+          "price": {"type": "string"},
+          "stock_status": {"type": "string"},
+          "short_description": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "HTML-stripped, whitespace-collapsed, trimmed to <=200 chars."
+          }
+        }
+      }
+    },
+    "_generated_by": {"const": "wc-catalog-sync"}
+  }
+}

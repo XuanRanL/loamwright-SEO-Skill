@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/angle.schema.json",
+  "title": "Angle + Format Decision",
+  "description": "Output of format-selector + topic-angle-selector. Stored at memory/workspace/{task_id}/angle.json.",
+  "type": "object",
+  "required": ["title", "format_id", "angle", "modifiers"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 50,
+      "maxLength": 65,
+      "description": "Validated by title_validator.py (register-aware). Primary keyword must appear (>1 warns). Power words and digits are OPTIONAL since the 2026-06 revision — the '+36% CTR' basis did not survive verification; never force clickbait tokens onto grief/tender registers."
+    },
+    "slug_draft": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "format_id": {
+      "type": "string",
+      "enum": [
+        "listicle", "how-to-guide", "pillar-page", "comparison", "product-review",
+        "case-study", "definition", "checklist", "news-analysis", "problem-solution",
+        "roundup", "data-research", "faq-knowledge", "glossary-hub", "template-resource",
+        "opinion", "personal-story", "interview", "curated-roundup", "level-guide",
+        "shortlist-validation", "encyclopedic", "multi-intent-hybrid", "buyers-guide", "weekly-digest",
+        "local-state-pillar", "local-city-page"
+      ],
+      "description": "One of the 27 evidence-backed formats from BLOG-FORMATS-2026-CATALOG.md. MUST stay in sync with templates/*.md basenames — tests/test_batch_queue_format_enum_seam.py pins this, and scripts/_core/batch_queue.py reads this enum as its single source of truth. v3.41.4 added the two local formats that format-selector Step 0 had been routing to since v3.40.0 without an accepting enum (local runs recorded pillar-page and documented the workaround in format_selection_rationale)."
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["tldr-first", "citation-capsules-per-h2", "mandatory-toc", "info-gain-prose", "information-gain-markers", "strong-eeat-signals", "featured-snippet-targets", "paa-aligned-faq", "ai-quotable", "voice-search-friendly", "speakable-schema"],
+        "$comment": "info-gain-prose is the canonical id since 2026-07-17 (marker retirement); information-gain-markers is accepted only so pre-retirement workspace artifacts still validate."
+      },
+      "uniqueItems": true,
+      "default": ["tldr-first"]
+    },
+    "template_path": {
+      "type": "string",
+      "description": "Relative path under templates/, e.g. 'templates/listicle.md'"
+    },
+    "angle": {
+      "type": "string",
+      "enum": ["how-to", "listicle", "mistakes", "cost-roi", "vs", "case-study", "myths", "trends", "buyers-guide", "problem-solution", "localized", "persona"]
+    },
+    "hook": {
+      "type": "string",
+      "description": "Opening hook 1-2 sentences"
+    },
+    "promise": {
+      "type": "string",
+      "description": "What the reader will gain (反异议 framed)"
+    },
+    "power_word": {
+      "type": "string",
+      "description": "Must come from references/seo/power-words.md"
+    },
+    "digit": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "persona": {
+      "type": "string",
+      "description": "Target reader persona (links to projects/{slug}/personas/)"
+    },
+    "alternative_titles_considered": {
+      "type": "array",
+      "items": {"type": "string"},
+      "maxItems": 5,
+      "description": "Backup titles for repair stage 5 (from-scratch)"
+    },
+    "format_selection_rationale": {
+      "type": "object",
+      "properties": {
+        "step_1_intent_match": {"type": "string"},
+        "step_2_funnel_adjustment": {"type": "string"},
+        "step_3_data_availability": {"type": "string"},
+        "step_4_cluster_state": {"type": "string"},
+        "step_5_modifiers_applied": {"type": "string"},
+        "citation_rate_expected": {"type": "number", "minimum": 0, "maximum": 1},
+        "research_source": {"type": "string"}
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

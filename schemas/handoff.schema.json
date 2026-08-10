@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xuanran-seo.com/schemas/handoff.schema.json",
+  "title": "Cross-Skill Handoff Envelope",
+  "description": "Unified handoff structure when one skill completes and another starts. Borrowed from seo-geo-claude-skills. Every skill terminal output should conform to this if it triggers a downstream skill.",
+  "type": "object",
+  "required": ["objective", "completion_status", "recommended_next_skill"],
+  "properties": {
+    "objective": {
+      "type": "string",
+      "description": "1-line summary of what THIS skill set out to do"
+    },
+    "key_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "severity"],
+        "properties": {
+          "title": {"type": "string"},
+          "severity": {"type": "string", "enum": ["critical", "high", "medium", "low", "info"]},
+          "evidence": {"type": "string"}
+        }
+      }
+    },
+    "evidence_summary": {
+      "type": "string",
+      "description": "Brief synthesis of evidence supporting findings"
+    },
+    "open_loops": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Things this skill couldn't resolve and downstream should pick up"
+    },
+    "completion_status": {
+      "type": "string",
+      "enum": ["DONE", "DONE_WITH_CONCERNS", "BLOCKED", "NEEDS_INPUT", "DEFERRED"]
+    },
+    "dimension_scores": {
+      "type": "object",
+      "description": "Per-dimension scores (C/O/R/Exp/Ept/A/T from CORE-EEAT)",
+      "patternProperties": {
+        "^[A-Z][a-z]*$": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "cite_scores": {
+      "type": "array",
+      "items": {"type": "number", "minimum": 0, "maximum": 1},
+      "description": "4 CITE dimensions: Citation / Identity / Trust / Eminence"
+    },
+    "priority_items": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Ordered list of next actions (most important first)"
+    },
+    "recommended_next_skill": {
+      "type": "string",
+      "description": "Slug of the next skill to invoke (or 'NONE' if pipeline complete)"
+    },
+    "cost_consumed_usd": {"type": "number", "minimum": 0},
+    "time_consumed_seconds": {"type": "number", "minimum": 0},
+    "artifacts_written": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Relative paths of files this skill wrote (for audit trail)"
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "skill_name": {"type": "string"},
+    "skill_version": {"type": "string"}
+  }
+}

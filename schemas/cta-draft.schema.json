@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cta-draft.schema.json",
+  "title": "CTA Draft (Step 2 output — cta-writer subagent)",
+  "type": "object",
+  "required": ["task_id", "blocks", "_generated_by"],
+  "properties": {
+    "task_id": {"type": "string"},
+    "blocks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["heading", "text"],
+        "properties": {
+          "heading": {"type": "string"},
+          "text": {"type": "string"},
+          "shortcode": {
+            "type": ["string", "null"],
+            "description": "Ecommerce only (v3.38.0): the WooCommerce products shortcode copied VERBATIM from cta-brief.json :: resolved_products.shortcode. Null/absent for b2b-services blocks. Never altered or rebuilt by the writer."
+          },
+          "blocks_used": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "propertyNames": {"enum": ["mid", "end"]}
+    },
+    "_generated_by": {"const": "cta-writer-subagent"},
+    "generated_at": {"type": "string"}
+  }
+}
