@@ -102,13 +102,13 @@ intermediate state — pipeline finishes synchronously)
 
 ## Cost
 
-| Mode used | 4 images @ 4K high (3840x2160 cover / 2880x2880 sections) |
+| Mode used | brief.image_count images @ 4K high (default 6; 3840x2160 cover / 2880x2880 sections) |
 |---|---|
 | All batch (best case) | ~$0.33 |
 | Partial fallback (1 slot) | ~$0.41 |
 | Full realtime fallback / pure realtime | ~$0.66 |
 
-Per-slot estimate from `cost_ledger.py`: 4K sizes pixel-scale the 1024x1024 high baseline ($0.211) — every 4K tier is ~8.29M px ~= $1.67/image, ~$6.7/article at 4 images. Deliberate over-estimates at official rates; the chatgpt-code relay bills credits (2K/4K same price), much lower.
+Per-slot estimate from `cost_ledger.py`: 4K sizes pixel-scale the 1024x1024 high baseline ($0.211) — every 4K tier is ~8.29M px ~= $1.67/image, ~$10/article at the default 6 images (~$6.7 at 4, ~$13.4 at the max 8). Deliberate over-estimates at official rates; the chatgpt-code relay bills credits (2K/4K same price), much lower.
 
 ## When to use the OLD submit→poll pattern instead
 

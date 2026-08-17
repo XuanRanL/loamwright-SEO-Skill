@@ -15,7 +15,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$PluginVersion = "3.42.16"
+$PluginVersion = "3.42.17"
 $PluginName = "xuanran-seo-blog-writer"
 
 # Resolve plugin root

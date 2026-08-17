@@ -1,7 +1,7 @@
 """scripts/openai/art_direction_compiler.py — Strategy A: build shared Art Direction Prefix
 + compile per-image prompts.
 
-Per IMAGE-GENERATION-V3.2-SPEC.md §4. All 4 images share the same Art Direction
+Per IMAGE-GENERATION-V3.2-SPEC.md §4. All of an article's images share the same Art Direction
 to ensure visual consistency, while individual subjects/composition vary.
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ def build_art_direction(
     voice_pair: str = "professional × general",
     industry: str = "general",
 ) -> ArtDirection:
-    """Construct the Art Direction Prefix shared across all 4 images."""
+    """Construct the Art Direction Prefix shared across all of the article's images."""
 
     # Map format → visual style
     style_by_format = {

@@ -5,4 +5,4 @@ All deterministic Python scripts. Importable from any skill or hook via
 absolute path otherwise.
 """
 
-__version__ = "3.42.16"
+__version__ = "3.42.17"

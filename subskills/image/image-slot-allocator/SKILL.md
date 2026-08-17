@@ -1,6 +1,6 @@
 ---
 name: image-slot-allocator
-description: Decide 4 image slots per article (1 cover + 3 section images). Reads outline.json + format_id. Picks H2s to image based on per-format mapping in references/image/format-style-mapping.md. Triggered as Stage 27a of phase-publish image sub-pipeline.
+description: Decide the article's image slots (brief.image_count, default 6 = 1 cover + 5 section images, max 8). Reads outline.json + format_id. Picks H2s to image based on per-format mapping in references/image/format-style-mapping.md. Triggered as Stage 27a of phase-publish image sub-pipeline.
 allowed-tools: [Read, Write]
 ---
 
@@ -24,7 +24,7 @@ Decides WHERE images go. Doesn't generate them (that's image-prompt-designer + o
 
 - `workspace/{task_id}/outline.json` — section structure
 - `workspace/{task_id}/angle.json` — format_id
-- `state.brief.image_count` — default 4 (1 cover + 3 inline)
+- `state.brief.image_count` — default 6 (1 cover + 5 inline; scripts/_core/image_policy.py, raised from 4 on 2026-08-17)
 
 ## Output
 
@@ -77,14 +77,14 @@ Per `references/image/format-style-mapping.md`:
 ## Logic
 
 ```python
-def allocate(outline, format_id, image_count=4):
+def allocate(outline, format_id, image_count=6):
     slots = [
         # Cover always first
         Slot(slot_id="cover", aspect="16:9", size="3840x2160",
              is_featured=True, h2_anchor=None, position="before-abstract"),
     ]
     
-    # Pick 3 section H2s based on format
+    # Pick image_count-1 section H2s based on format
     section_h2s = pick_section_h2s_for_format(outline.sections, format_id, n=3)
     for i, h2 in enumerate(section_h2s):
         slots.append(Slot(

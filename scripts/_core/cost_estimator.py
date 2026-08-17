@@ -38,24 +38,28 @@ from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from pathlib import Path
 
-from scripts._core import cost_ledger, format_registry
+from scripts._core import cost_ledger, format_registry, image_policy
 
 
 # ── Per-format cost model parameters (calibrated against /article runs) ──
 
 FORMAT_PARAMS: dict[str, dict] = {
-    "listicle":       {"words": 6000, "research_calls_advanced": 8, "research_extracts": 12, "image_count": 4},
-    "how-to-guide":   {"words": 4500, "research_calls_advanced": 5, "research_extracts": 8,  "image_count": 4},
-    "pillar-page":    {"words": 6500, "research_calls_advanced": 10, "research_extracts": 15, "image_count": 4},
-    "comparison":     {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": 4},
-    "case-study":     {"words": 5500, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": 4},
-    "definition":     {"words": 3500, "research_calls_advanced": 5, "research_extracts": 7,  "image_count": 4},
+    "listicle":       {"words": 6000, "research_calls_advanced": 8, "research_extracts": 12, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    "how-to-guide":   {"words": 4500, "research_calls_advanced": 5, "research_extracts": 8,  "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    "pillar-page":    {"words": 6500, "research_calls_advanced": 10, "research_extracts": 15, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    "comparison":     {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    "case-study":     {"words": 5500, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    "definition":     {"words": 3500, "research_calls_advanced": 5, "research_extracts": 7,  "image_count": image_policy.DEFAULT_IMAGE_COUNT},
+    # ⚠ the 2/3-image rows below are ESTIMATES for short formats — generation itself
+    # follows brief.image_count (default image_policy.DEFAULT_IMAGE_COUNT) regardless
+    # of format, so a short-format article that wants fewer images must SET
+    # image_count in its brief; otherwise the real cost tracks the default row.
     "news-analysis":  {"words": 1500, "research_calls_advanced": 4, "research_extracts": 5,  "image_count": 2},
-    "product-review": {"words": 4500, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": 4},
+    "product-review": {"words": 4500, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": image_policy.DEFAULT_IMAGE_COUNT},
     "shortlist-validation": {"words": 2200, "research_calls_advanced": 6, "research_extracts": 9, "image_count": 3},
     "faq-knowledge":  {"words": 3000, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": 2},
     # default fallback
-    "default":        {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": 4},
+    "default":        {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
 }
 
 # FORMAT_PARAMS is a COST-MODEL table — it holds calibration rows only for the formats
@@ -238,7 +242,7 @@ def estimate_from_brief(brief_path: Path) -> CostBreakdown:
     return estimate_article(
         fmt=data.get("format", "listicle"),
         words=data.get("word_count_target") or data.get("words"),
-        image_count=data.get("image_count", 4),
+        image_count=data.get("image_count", image_policy.DEFAULT_IMAGE_COUNT),
         image_quality=data.get("image_quality", "high"),
         batch_images=data.get("batch_images", True),
     )

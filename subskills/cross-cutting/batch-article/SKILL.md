@@ -117,6 +117,13 @@ For each pending entry (call `batch_queue next --batch-id X` until empty):
      set `target_market_locale` to the keyword's dialect only if the audience
      really is that market — `spelling_dialect_check` auto-exempts the exact
      keyword's inflections either way (v3.41.3).
+   - IMAGE COUNT (v3.42.17): OMIT `image_count` from the brief unless overriding —
+     the enforced default is `scripts/_core/image_policy.py :: DEFAULT_IMAGE_COUNT`
+     (6 = 1 cover + 5 section images; max 8), pinned to the schema annotation by
+     `tests/test_image_count_policy.py`. Short formats (news-analysis,
+     faq-knowledge, shortlist-validation) SHOULD set a lower explicit count —
+     the cost estimator's per-format rows assume they do; generation itself
+     always follows the brief, not the format.
    - QUALITY TARGET (v3.42.16): OMIT `quality_target_score` from the brief
      unless the operator explicitly requested a stricter bar. The enforced
      default is `scripts/_core/review_target.py :: DEFAULT_REVIEW_TARGET` (80);

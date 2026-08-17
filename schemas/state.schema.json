@@ -114,8 +114,9 @@
         "image_count": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 4,
-          "default": 4
+          "maximum": 8,
+          "default": 6,
+          "description": "Total images incl. the featured cover (6 = 1 cover + 5 inline). OMIT unless overriding — the enforced fallback is scripts/_core/image_policy.py :: DEFAULT_IMAGE_COUNT, and tests pin this annotation to it. Raised 4→6 / max 4→8 on 2026-08-17 (operator decision: ~900 words per visual anchor on a 5000-word article; ≈$1.67/image at 4K). 0 is a real value (text-only article)."
         },
         "image_quality": {
           "type": "string",

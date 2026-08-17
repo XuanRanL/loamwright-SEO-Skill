@@ -114,7 +114,7 @@ The "Further Reading" prose paragraph is OPTIONAL. The "References" `<ol>` block
   "total_word_budget": 6200,
   "expected_h2_count": 8,
   "expected_table_count": 3,
-  "expected_image_count": 4
+  "expected_image_count": 6
 }
 ```
 
@@ -132,7 +132,7 @@ The "Further Reading" prose paragraph is OPTIONAL. The "References" `<ol>` block
 5. **Per-section word_budget**: each between 150 and 2500
 6. **citation_capsule_required: true** on every content section (excludes Abstract / ToC / References)
 7. **image_slot: true** on exactly `state.brief.image_count − 1` sections (the cover is
-   NOT an inline slot: `image_count` counts cover + inline images, so `image_count: 4`
+   NOT an inline slot: `image_count` counts cover + inline images, so `image_count: 6`
    means exactly **3** sections carry `image_slot: true`). Clarified 2026-07-06 after the
    old wording ("exactly image_count sections … cover doesn't count") read two ways and
    produced a 4-boolean outline for a 4-image article that had to be hand-corrected.

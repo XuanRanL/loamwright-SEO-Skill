@@ -1,12 +1,12 @@
 ---
 name: image-prompt-designer
-description: Build shared Art Direction Prefix + per-slot 9-field prompts for 4 images. Uses Strategy A (shared prefix; per-slot variation). Reads brand-identity, brand-config, format_id. Produces image-prompts.json for openai-image-generator. Stage 27b.
+description: Build shared Art Direction Prefix + per-slot 9-field prompts for the article's image slots (brief.image_count, default 6, max 8 — scripts/_core/image_policy.py). Uses Strategy A (shared prefix; per-slot variation). Reads brand-identity, brand-config, format_id. Produces image-prompts.json for openai-image-generator. Stage 27b.
 allowed-tools: [Read, Write, Bash]
 ---
 
 # Image Prompt Designer
 
-Builds AI image prompts using Strategy A (shared Art Direction Prefix for visual consistency across 4 images).
+Builds AI image prompts using Strategy A (shared Art Direction Prefix for visual consistency across the article's images — count from brief.image_count, default 6).
 
 ## Inputs
 
@@ -107,7 +107,7 @@ python -m scripts.openai.art_direction_compiler \
 
 ## Cost
 
-1 LLM call (Claude Opus) ~$0.05 to design all 4 prompts together.
+1 LLM call (Claude Opus) ~$0.05 to design all prompts together (count-independent).
 
 ## Handoff
 

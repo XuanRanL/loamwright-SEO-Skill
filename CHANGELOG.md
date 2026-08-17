@@ -1,5 +1,42 @@
 # Changelog
 
+## [3.42.17] - 2026-08-17 (default images per article 4 → 6, ceiling → 8, count owned by one module)
+
+Operator decision: raise the per-article image default to 6 (1 cover + 5 section
+images ≈ one visual anchor per ~900 words on a 5,000-word piece; ≈$1.67/image at 4K,
+so image cost moves ≈$6.7 → ≈$10/article) and the ceiling to 8 for briefs that
+explicitly want more. Applying it surfaced the same disease as the same-day
+review-target fix: "4" was spelled independently in the schema annotation, the
+image-prompt-designer dispatch_prompt ("design 4 image prompts"), both designer
+instruction layers, the slot-allocator doc, phase-publish, the generator's cost
+math, and the cost estimator's per-format rows.
+
+### Changed
+
+- **`scripts/_core/image_policy.py` (new)** owns `DEFAULT_IMAGE_COUNT = 6` /
+  `MAX_IMAGE_COUNT = 8` / `resolve_image_count()` (absent/garbage → default;
+  **0 stays a real value** — a text-only article is an explicit choice; above-max
+  clamps). Schema annotation corrected and PINNED (`tests/test_image_count_policy.py`,
+  watched RED against a reverted default).
+- **Dispatch prompts are now count-parameterized:** `_render_dispatch_prompt` gains
+  `{image_count}` / `{inline_image_count}` placeholders; the image-prompt-designer
+  Stage template uses them, and a wiring pin fails if a literal "design N image
+  prompts" ever reappears. The count-consuming layers that were already
+  count-agnostic (outline-architect's `image_count − 1` rule, verify_post's
+  adapt-from-images.json, image-visual-qa, the pipelines) needed no change.
+- **Cost estimator rows that mirrored the old default now import the constant**
+  (pinned); the deliberate short-format rows (news-analysis 2 / faq-knowledge 2 /
+  shortlist-validation 3) stay, with a new caveat comment + batch-article SKILL
+  note: generation follows the BRIEF, not the format — short formats should set an
+  explicit lower `image_count` or their real cost tracks the default.
+- Doc fan-out updated in the same pass (Rule 11): agents/image-prompt-designer.md,
+  agents/image-curator.md, both image subskills, outline-architect example,
+  phase-publish stage sketch + cost line, openai-image-generator cost math,
+  batch-article brief guidance.
+- The agent-frontmatter YAML guard (v3.42.12) caught a colon this pass introduced
+  into an unquoted description mid-edit — fixed before commit; the guard fired
+  exactly as designed.
+
 ## [3.42.16] - 2026-08-17 (the duplicated-CTA incident, the reviewer target with four spellings, and the flip that had no executor)
 
 Everything here came out of one real 3-article batch (all 46 stages ran, all gates green,

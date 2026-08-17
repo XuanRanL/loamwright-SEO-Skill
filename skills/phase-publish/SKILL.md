@@ -26,7 +26,7 @@ Required in `~/.xuanran-seo/credentials/wordpress/<slug>.json`:
 
 ```
 Stage 27a: image-slot-allocator    (~2 sec, no LLM)
-  Decide 4 slots: 1 cover (16:9) + 3 sections (4:3 each)
+  Decide brief.image_count slots (default 6, max 8 — scripts/_core/image_policy.py): 1 cover (16:9) + the rest section images (16:9/4:3)
   Format-aware H2 selection (per BLOG-FORMATS-2026-CATALOG §2.2)
   Output: image_slots.json
 
@@ -61,7 +61,7 @@ Stage 27f: image-curator            (~10 sec, LLM)
   Update frontmatter Stage: images-injected
 ```
 
-**Cost**: provider-dependent. Official OpenAI realtime high × 4 ≈ $0.66. The relay (openclawroot) is token-billed and typically cheaper, but cost_ledger deliberately over-estimates it with the official per-image table (conservative cost guard, see scripts/_core/image_provider.py).
+**Cost**: provider-dependent. At 4K high the ledger books ~$1.67/image → ~$10/article at the default 6 images (~$13.4 at the max 8). The relay (openclawroot) is token-billed and typically cheaper, but cost_ledger deliberately over-estimates it with the official per-image table (conservative cost guard, see scripts/_core/image_provider.py).
 
 ## Stage 2: WordPress Publish (~30 sec)
 
@@ -71,7 +71,7 @@ unresolvable name aborts before any WP write (create deliberately at init via
 `scripts.wordpress.setup_categories`, or opt in with `--allow-create-categories`):
 
 ```python
-1. Upload all 4 images to Media Library (multipart)
+1. Upload every generated image to Media Library (multipart)
    - cover → featured_media
    - sections → inline references in body
    - All srcset variants uploaded
@@ -113,7 +113,7 @@ unresolvable name aborts before any WP write (create deliberately at init via
      name with `python -m scripts._core.style_tokens --show {slug}` (tokenized
      projects ship `mwxiod-1ymm61`, NOT `{slug}-pillar`; grepping for the legacy
      name is a check that cannot pass). `verify_post.py` already resolves it for you.
-   - All 4 image source URLs render
+   - All image source URLs render (count = brief.image_count)
    - At least one JSON-LD block contains expected schema types
    - `<h2>References</h2>` (or `<h2 id="references">`) present with ≥3 `<li>` link-resolvable entries
    - `<p class="article-signature">` paragraph present near end of body

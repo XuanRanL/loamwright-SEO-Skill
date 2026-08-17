@@ -41,7 +41,7 @@ The final image step before publish. Takes raw images + their metadata and turns
 
 ### Step 1: Polish alt text per image
 
-For each image (cover + 3 sections):
+For each image (cover + the section images):
 - Read `alt_text_seed` from image_prompts.json
 - Refine to:
   - 60-125 chars
@@ -123,7 +123,7 @@ Set Stage: `images-injected`.
 ## Hard rules
 
 1. Alt text 60-125 chars per image
-2. No duplicate alt texts across the 4 images
+2. No duplicate alt texts across all images
 3. No alt starts with "Image of..." / "Picture showing..." / "Photo of..."
 4. Primary keyword appears in cover alt + 0-1 section alts (not all)
 5. SEO filename kebab-case, contains primary keyword
