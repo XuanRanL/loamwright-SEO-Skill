@@ -40,12 +40,21 @@ from scripts._core import hop3_drift
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
 MU_DIR = PLUGIN_ROOT / "install" / "wordpress-mu-plugin"
 
-# endpoint -> (php file, json field carrying the deployed version)
+# name -> (php file, json field carrying the deployed version, requires)
+#
+# `requires` names the SEO plugin a bridge exists to serve, or None when the
+# bridge is ours and applies to every site. That fourth element is load-bearing:
+# the "site does not run this plugin, so the bridge is not missing" rule below
+# must NOT reach an always-applicable bridge, or its absence gets filed as
+# `not_applicable` and the host reports "in sync" while the file is simply not
+# there (observed on project-juliet the day page-schema was added).
 BRIDGES = {
     "rank-math": ("xuanran-rank-math-rest-bridge.php",
-                  "/xuanran/v1/rank-math-bridge", "bridge_version"),
+                  "/xuanran/v1/rank-math-bridge", "bridge_version", "rank-math"),
     "yoast": ("seo-machine-yoast-rest.php",
-              "/seo-machine/v1/yoast-status", "version"),
+              "/seo-machine/v1/yoast-status", "version", "yoast"),
+    "page-schema": ("xuanran-page-schema.php",
+                    "/xuanran/v1/page-schema", "page_schema_version", None),
 }
 
 _VER_RE = re.compile(r"^\s*\*\s*Version:\s*([0-9][0-9A-Za-z.\-]*)", re.M)
@@ -112,7 +121,7 @@ def run(slug: str) -> dict[str, Any]:
     except Exception:                                       # noqa: BLE001
         pass
 
-    for name, (php, endpoint, field) in BRIDGES.items():
+    for name, (php, endpoint, field, requires) in BRIDGES.items():
         report["scanned"] += 1
         shipped = shipped_version(php)
         deployed = None
@@ -129,9 +138,10 @@ def run(slug: str) -> dict[str, Any]:
                 continue
 
         res = compare_version(shipped, deployed)
-        if res["state"] == "not_deployed" and active and name not in active:
+        if (res["state"] == "not_deployed" and requires is not None
+                and active and requires not in active):
             res = {"state": "not_applicable", "shipped": shipped,
-                   "detail": f"site runs {'/'.join(sorted(active))}, not {name}"}
+                   "detail": f"site runs {'/'.join(sorted(active))}, not {requires}"}
         rec = {"id": f"{slug}/{name}", "bridge": name, "php": php, **res}
         if res["state"] in ("STALE", "not_deployed", "AHEAD"):
             report["updated"].append(rec)

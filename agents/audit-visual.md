@@ -18,7 +18,7 @@ You are a visual UX auditor. You capture screenshots, assess mobile responsivene
 
 ## Scripts
 
-- `python -m scripts.audit.capture_screenshot --url {url} --viewport {width}x{height} --output {path} --json` — captures full-page and viewport-clipped screenshots
+- `python -m scripts.audit.capture_screenshot {url} --viewport {desktop|mobile|tablet} --full --output {dir} --json` — captures full-page and viewport-clipped screenshots (URL is positional; `--viewport` takes a named device, not WxH; `--all` captures every viewport)
 
 ## Analysis Checks
 

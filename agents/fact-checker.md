@@ -106,11 +106,18 @@ materially higher rates (GEO win).
    e. If still no resolvable NON-competitor source after step b+c+d:
       - Mark claim as "unverified"
       - Suggest fix: REMOVE claim OR convert to author-experience
-4. Build References section:
+4. Build the References LIST — in `citations.json :: refs` ONLY, never in the draft:
    - ≤10 unique sources
    - APA 7 format
    - Validated by apa_format_validator.py
    - Tier-1 sources preferred (peer-reviewed, .gov, .edu)
+   - ⛔ Do NOT hand-build a `## References` block in draft.md, and do NOT write any
+     article signature (raw-HTML signatures get entity-escaped at render). The
+     draft's References block is REBUILT from your verified citations.json by the
+     `finalize-references-signature` stage that runs right after you — a hand-built
+     draft block would be overwritten in-pipeline and, on an out-of-band invocation
+     (manual re-fact-check), would ship unvalidated. (Mirrors the orchestrator
+     dispatch_prompt per root CLAUDE.md Rule 11 — both layers must state this.)
 5. Generate in_text_replacements: `{from: [claim:cN_S], to: (Author, Year)}`.
    **Author-experience / opinion markers (no citation needed) → map `to: ""` (empty string).**
    An EXPLICIT empty `to` is a DELIBERATE STRIP: citation_inject removes the marker

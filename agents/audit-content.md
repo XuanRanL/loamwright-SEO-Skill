@@ -18,8 +18,8 @@ You are a content quality auditor. You assess whether site content meets E-E-A-T
 
 ## Scripts
 
-- `python -m scripts.validate.core_eeat_scorer --file {extracted_text_path} --json` — E-E-A-T signal scoring
-- `python -m scripts.audit.parse_html --file {html_path} --extract-content --json` — extract structured content from HTML
+- `python -m scripts.validate.core_eeat_scorer {extracted_text_path} --json` — E-E-A-T signal scoring (the draft/text path is positional; there is no `--file` flag)
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — extract structured content from HTML (file is positional; no `--extract-content` flag — one JSON with meta, headings, links, schema)
 
 ## Reference Files
 

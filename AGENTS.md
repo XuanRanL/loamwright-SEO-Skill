@@ -23,7 +23,7 @@ This file routes user intent to skills, **host-agnostic**. Any AI host (Claude C
 → Load skill: `skills/seo-blog/SKILL.md` (master orchestrator, runs all 5 phases)
 
 **Triggers**: "/rewrite", "rewrite this article", "update this post"
-→ Load skill: `subskills/optimize/content-refresher/SKILL.md`
+→ Load skill: `subskills/cross-cutting/rewrite/SKILL.md`
 
 **Triggers**: "/refresh", "refresh this page", "decay-aware update"
 → Load skill: `subskills/monitor/content-refresher/SKILL.md`
@@ -85,9 +85,6 @@ This file routes user intent to skills, **host-agnostic**. Any AI host (Claude C
 **Triggers**: "/brand-guideline", "set brand voice", "configure voice"
 → Load skill: `subskills/plan/brand-guideline-maker/SKILL.md`
 
-**Triggers**: "/context show / edit", "view brand context"
-→ Load skill: `subskills/cross-cutting/context-manager/SKILL.md`
-
 **Triggers**: "/config", "settings"
 → Open `~/.xuanran-seo/config.yaml` for editing
 
@@ -102,13 +99,7 @@ This file routes user intent to skills, **host-agnostic**. Any AI host (Claude C
 **Triggers**: "/perf", "performance report", "KPI summary"
 → Load skill: `subskills/monitor/performance-reporter/SKILL.md`
 
-**Triggers**: "/alerts", "monitoring alerts"
-→ Load skill: `subskills/cross-cutting/alert-manager/SKILL.md`
-
 ### Meta commands
-
-**Triggers**: "/skillify", "turn this into a skill"
-→ Load skill: `subskills/cross-cutting/skillify/SKILL.md`
 
 **Triggers**: "/evolve", "learn from past runs"
 → Load skill: `subskills/cross-cutting/self-upgrade/SKILL.md`

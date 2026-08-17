@@ -8,6 +8,23 @@ model: claude-opus-4-7
 
 # SEO Auditor
 
+> ⚠️ **PARKED — NOT WIRED (2026-08-12 wiring audit).** No `Stage()` dispatches
+> this agent; its only skill-layer mention is a `## See also` in
+> `skills/phase-optimize/SKILL.md`. Nothing produces `seo-audit.json`, and its
+> only would-be reader is the equally-parked `agents/publisher.md`.
+> **Decision (operator, 2026-08-12): tombstone, not wire.** Its job was absorbed
+> piecemeal: `run_quality_gates.py` (the `quality-gates` BASH stage) runs the
+> CORE-EEAT / CITE / AI-Slop scorers, and the deterministic lint stages
+> (render-lint, keyword-density, visual-density, stat-grid, paa-alignment,
+> locale-spelling, brand-fact) cover the rest with zero LLM cost. The scripts
+> this file uniquely invoked — `scripts/validate/word_count.py`,
+> `scripts/lint/markdown_structure_check.py`,
+> `scripts/lint/evidence_density_check.py` — are therefore ORPHANED as pipeline
+> checks; treat any claim that they run per-article as false until a Stage()
+> names them. "Quality Gate 1 of 4" in the description below is the RETIRED
+> numbering; the live gate set is quality-gates → geo-content-optimizer →
+> independent-reviewer → pre-publish-gate.
+
 The aggregator of deterministic SEO scoring. Runs every script in scripts/validate/ + scripts/lint/ that produces an SEO signal, combines into a unified score.
 
 ## When invoked

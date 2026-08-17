@@ -506,8 +506,10 @@ Phase Publish (skills/phase-publish/SKILL.md)
   Stages: [image-visual-qa (vision QA + regen loop) → image-curator]
           → wordpress-publisher (creates as DRAFT — Rule 5a)
           → schema-injector → preview-URL verification
-          ✋ Human checkpoint: confirm "publish" → status flip → live-URL re-verify
-          → indexing-notifier (runs AFTER status=publish)
+          ✋ Human checkpoint: confirm "publish" → THE flip executor (v3.42.16):
+             python -m scripts.wordpress.flip_post_live {slug} --workspace {tid} --json
+             (owns PATCH → live-URL re-verify → indexing re-run; exit 2 = live but
+              NOT index-submitted — resolve, never ignore)
   Output: preview URL (default) OR live URL (if user confirmed publish)
           + change-log.json entry
 

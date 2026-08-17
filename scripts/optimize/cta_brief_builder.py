@@ -384,13 +384,54 @@ def _drop_excluded(categories: list[dict[str, Any]], excluded: set[str],
     resolution, so no code path can reach a blocked category."""
     if not excluded:
         return categories
+
+    # 2026-08-12 root cure — exclusion is INHERITED down the category tree.
+    #
+    # Until now this matched a category's own slug/name only, so excluding a
+    # PARENT excluded nothing: project-alpha's `prescription` (id 92) stayed listed
+    # while its four Rx children remained selectable. The operator had to
+    # enumerate children by hand, which is inherently stale-able — and it went
+    # stale: `spot-on-systemic` (id 93, a child of Prescription, holding product
+    # 36921 "Spot-On · Dog 10-25kg") was excluded in
+    # `blog_sidebars.excluded_product_categories` but NOT in
+    # `conversion_offers.excluded_categories`, leaving a prescription-only
+    # product CTA-merchandisable from editorial content. That is the site's own
+    # audit CRIT-1 defect (a shoppable Rx grid implies no-prescription purchase;
+    # 15 US states require an in-person VCPR).
+    #
+    # Excluding a parent now excludes its whole subtree, so a NEW Rx child added
+    # to the catalog next month is blocked the day it appears, with no config
+    # edit. Enumerating children stays harmless and remains supported.
+    by_id: dict[Any, dict[str, Any]] = {
+        cat.get("id"): cat for cat in categories if isinstance(cat, dict) and cat.get("id")
+    }
+
+    def _named(cat: dict[str, Any]) -> bool:
+        slug = str(cat.get("slug") or "")
+        name_slug = _slugify_category(html.unescape(str(cat.get("name") or "")))
+        return slug in excluded or bool(name_slug and name_slug in excluded)
+
+    def _blocked(cat: dict[str, Any]) -> bool:
+        seen: set[Any] = set()
+        node: dict[str, Any] | None = cat
+        while isinstance(node, dict):
+            if _named(node):
+                return True
+            nid = node.get("id")
+            if nid in seen:  # defensive: malformed parent cycle
+                break
+            seen.add(nid)
+            parent = node.get("parent")
+            if not parent:
+                break
+            node = by_id.get(parent)
+        return False
+
     kept: list[dict[str, Any]] = []
     for cat in categories:
         if not isinstance(cat, dict):
             continue
-        slug = str(cat.get("slug") or "")
-        name_slug = _slugify_category(html.unescape(str(cat.get("name") or "")))
-        if slug in excluded or (name_slug and name_slug in excluded):
+        if _blocked(cat):
             continue
         kept.append(cat)
     return kept

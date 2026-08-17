@@ -17,10 +17,8 @@ maxTurns: 60
 Read `references/audit/schema-types.md` before analysis.
 
 ## Scripts
-- `python -m scripts.audit.parse_html --file {html} --extract-schema --extract-pricing --json`
-- `python -m scripts.audit.schema_validate --type Product --file {schema} --json` (if available)
-
-If `schema_validate` script is unavailable, validate Product schema manually by parsing JSON-LD from crawl results and checking required fields against schema.org spec.
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — the file is positional; output includes a `schema` array with every JSON-LD block (there are no `--extract-*` flags, and pricing is not extracted — read visible prices from the HTML yourself)
+- `python -m scripts.validate.schema_validator {schema_json_file} --json` — deep validation of a JSON-LD payload (or list of payloads) saved to a file; the file argument is positional and there is no `--type` flag (it detects types itself)
 
 ## 10 Checks
 

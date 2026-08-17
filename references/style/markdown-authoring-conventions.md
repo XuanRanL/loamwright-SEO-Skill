@@ -155,7 +155,7 @@ For inline JSON-LD scripts, custom CTA blocks, or other escape-hatch cases:
 
 The `<!-- wp:html -->` comment is a Gutenberg block marker that the WP REST API preserves verbatim. The content inside passes through to the front-end as raw HTML — not escaped. Use this sparingly; ideally only for:
 - Inline `<script type="application/ld+json">` schema blocks (when the publisher's schema injector doesn't cover the schema type you need)
-- Project-specific class wrappers (e.g. `<div class="project-charlie-pillar">` — the publisher handles this automatically; you don't write it manually)
+- Project-specific class wrappers — the publisher handles these automatically; you never write one manually. Since v3.42.0 (style tokens) the PUBLISHED class name is a per-project HMAC token, not the legacy `{slug}-pillar` form: internal artifacts keep legacy names and `wp_publisher._apply_project_styling` transforms them at the publish boundary. Never hand-write a published class name; resolve it via `python -m scripts._core.style_tokens --show {slug}` (root CLAUDE.md Rule 2).
 - Embedded interactive elements (calculator iframes, custom buttons)
 
 **Do NOT use `wp:html` blocks as a workaround for the rules above.** If you find yourself wanting `<!-- wp:html --><p class="article-signature">...</p><!-- /wp:html -->`, write the markdown italic form instead (Rule 2) and let the publisher tag it.

@@ -164,7 +164,8 @@
           "type": "number",
           "minimum": 0,
           "maximum": 100,
-          "default": 95
+          "default": 80,
+          "description": "Reviewer score target. OMIT unless the operator explicitly wants a stricter bar — nothing applies schema defaults at runtime; the enforced fallback is scripts/_core/review_target.py :: DEFAULT_REVIEW_TARGET (80), and tests pin this annotation to it. The old annotation here said 95 while every gate enforced 80; a brief author copied it and burned six repair rounds (2026-08-17)."
         },
         "local_mode": {
           "type": "boolean",

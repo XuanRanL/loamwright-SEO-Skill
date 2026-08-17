@@ -154,6 +154,36 @@ def _print_csv(entries: list[dict[str, Any]]) -> None:
 # ─── CLI entry point ──────────────────────────────────────────────────────────
 
 
+def _coerce_credit(value: Any) -> int | None:
+    """An unambiguously numeric credit count, or None (UNKNOWN).
+
+    2026-08-12 audit: the v3.42.5 fix guarded ``is None`` only, so a FALSY
+    non-numeric value slipped through ``int('' or 0)`` and became a REAL zero —
+    ``{"plan_limit": "", "plan_usage": ""}`` (a shape ``_fetch_usage``'s own
+    account-normalization can produce) resolved to ``(0, None)``, flowed to
+    ``credential_hub.set_tavily_key_balance`` and persist-marked a healthy key
+    exhausted off an unreadable payload. Rule 14.6 surviving its own fix.
+
+    Accepted: int, float, and numeric strings — ``"0"`` IS a real zero
+    (providers stringify numbers often enough that refusing them would turn a
+    readable body into a false unknown). Rejected as UNKNOWN: bool (JSON
+    true/false is never a credit count), ``''``/``[]``/``{}``/None, and any
+    other non-int-coercible shape.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
 def resolve_remaining(result: dict[str, Any]) -> tuple[int | None, str | None]:
     """Turn a /usage body into a balance, or say why it cannot be one.
 
@@ -164,7 +194,11 @@ def resolve_remaining(result: dict[str, Any]) -> tuple[int | None, str | None]:
     mechanism that drained 53 keys: the provider moved the /usage fields, every
     ``.get()`` returned None, ``or 0`` turned that into 0, and healthy keys were
     persist-marked exhausted. Normalizing the new payload shape (v3.42.2) fixed
-    the observed instance, not the class — the next rename repeats it.
+    the observed instance, not the class — the next rename repeats it. The
+    2026-08-12 audit found the class alive a THIRD time one token over: the
+    ``is None`` guard let falsy non-numerics ('' / [] / False) through the same
+    ``or 0``, so all coercion now goes through ``_coerce_credit`` and anything
+    non-int-coercible is an UNKNOWN (no balance write, never exhausted).
 
     Rule 9's own lesson (never persist-mark a key on an ambiguous signal) was
     implemented for the HTTP-error path and not for this parse path. An HTTP 200
@@ -179,13 +213,17 @@ def resolve_remaining(result: dict[str, Any]) -> tuple[int | None, str | None]:
 
     if remaining_raw is None and (limit_raw is None or usage_raw is None):
         return None, f"unrecognized /usage shape (keys={sorted(result)[:6]})"
-    try:
-        if remaining_raw is not None:
-            return int(remaining_raw), None
-        return max(0, int(limit_raw or 0) - int(usage_raw or 0)), None
-    except (TypeError, ValueError):
-        return None, (f"non-numeric /usage values (remaining={remaining_raw!r} "
-                      f"limit={limit_raw!r} usage={usage_raw!r})")
+
+    unreadable = (None, (f"non-numeric /usage values (remaining={remaining_raw!r} "
+                         f"limit={limit_raw!r} usage={usage_raw!r})"))
+    if remaining_raw is not None:
+        remaining = _coerce_credit(remaining_raw)
+        return (remaining, None) if remaining is not None else unreadable
+    limit = _coerce_credit(limit_raw)
+    usage = _coerce_credit(usage_raw)
+    if limit is None or usage is None:
+        return unreadable
+    return max(0, limit - usage), None
 
 
 def main() -> int:  # noqa: C901 — the branching is intentional CLI dispatch

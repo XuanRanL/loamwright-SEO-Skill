@@ -335,13 +335,41 @@ def log(
     project_slug: str | None = None,
     extra: dict | None = None,
 ) -> None:
-    """Append an entry to the ledger JSONL file."""
+    """Append an entry to the ledger JSONL file.
+
+    ``project_slug`` defaults to the ACTIVE project (env-first, Rule 7) when the
+    caller does not supply one.
+
+    2026-08-12 root cure. The parameter has existed since day one and every one
+    of the eight production call sites omitted it, so 7,108 of 7,112 ledger rows
+    carried ``project_slug: null`` (the 4 exceptions are a hand-written day-one
+    backfill). ``fleet_view._site_cost_30d`` filters rows by exactly this field,
+    so `/fleet` reported ``$0.00`` for all 13 sites against $873.99 of real
+    logged spend, and its "High spend (>$100)" health alert was unpassable — a
+    check that could not fail for the reason it exists (Rule 14).
+
+    Defaulting HERE rather than at the call sites is deliberate: most callers
+    (tavily_search, serpapi_query, the image pipeline) legitimately do not know
+    the project, and threading it through eight signatures would leave the next
+    new call site free to forget again. The env-first resolver is also what
+    keeps parallel sessions correct — each is launched with
+    ``XS_ACTIVE_PROJECT`` pinned, so concurrent runs attribute to their own
+    project rather than to a shared mutable pointer.
+    """
     if isinstance(actual_cost, CostEstimate):
         cost = actual_cost.estimated_usd
         model = model or actual_cost.model
         endpoint = endpoint or actual_cost.endpoint
     else:
         cost = Decimal(actual_cost)
+
+    if project_slug is None:
+        try:
+            from scripts._core import active_project
+
+            project_slug = active_project.get_active_project() or None
+        except Exception:
+            project_slug = None  # never let attribution break a billed call
 
     LEDGER_FILE.parent.mkdir(parents=True, exist_ok=True)
 

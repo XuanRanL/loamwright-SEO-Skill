@@ -23,6 +23,7 @@ from typing import Any
 
 from scripts._core import file_bus  # tolerant_json_load: self-heals subagent JSON tool-tag leaks
 from scripts._core.provenance import PROVENANCE_REQUIRED  # single _generated_by source (v3.41.3)
+from scripts._core.review_target import DEFAULT_REVIEW_TARGET, review_target  # ONE reviewer-target resolver (2026-08-17)
 from scripts.pipeline import fc_verdict  # ONE verdict classifier for all gates (2026-08-02)
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -617,14 +618,16 @@ def _reviewer_target(ws: Path) -> int:
     2026-07-01: this brief field was previously read by NO code — the SKILL contract
     says `gates.independent_review.score >= state.brief.quality_target_score`, but the
     gate hardcoded 80, so an 84 sailed past an 85-target brief (loamdentallocal0701).
-    Fallback stays 80 (the historical minimum) when the brief doesn't set one.
+    2026-08-17: resolution now delegates to scripts/_core/review_target.py — the twin
+    gates (this one and orchestrator._content_gate_reason) each carried their own
+    `or 80` literal while the schema annotated `default: 95`, and a brief author who
+    trusted the schema burned six repair rounds against a bar no code enforces.
     """
     try:
         state = json.loads((ws / "state.json").read_text(encoding="utf-8"))
-        t = int((state.get("brief") or {}).get("quality_target_score") or 80)
-        return max(t, 1)
+        return review_target(state)
     except Exception:
-        return 80
+        return DEFAULT_REVIEW_TARGET
 
 
 def check_quality_gates(ws: Path) -> dict:
@@ -853,17 +856,30 @@ def check_brand_facts(ws: Path) -> dict:
 
 
 def check_gate_freshness(ws: Path) -> dict:
-    """ADVISORY (2026-07-01): draft edits AFTER a gate/subagent artifact was
-    written mean that artifact scored a draft the reader never sees
-    (loamphxseo0701: the shipped draft was 11 minutes newer than quality.json).
-    Deterministic gates re-run automatically now (orchestrator freshness rule);
-    this WARN surfaces the LLM artifacts whose re-dispatch is the operator's
-    cost/benefit call. WARN, never FAIL — every routine repair loop edits the
-    draft after review, and a hard fail here would deadlock the normal flow."""
+    """Draft edits AFTER a gate/subagent artifact was written mean that artifact
+    scored a draft the reader never sees (loamphxseo0701: the shipped draft was
+    11 minutes newer than quality.json).
+
+    Split severity (2026-08-17):
+    - fact-check / humanizer-report / quality staleness stays ADVISORY (WARN):
+      later optimize stages (linker, visual-designer, cta-injection) legitimately
+      edit the draft after those artifacts in the normal stage order.
+    - review.json staleness is a FAIL. The independent reviewer is the LAST
+      content stage; in the normal order nothing edits draft.md after a passing
+      review, and the review-gate repair contract already mandates re-dispatching
+      the reviewer after any repair edit (which makes review.json newest again),
+      so this cannot deadlock the sanctioned flow. It exists because a real batch
+      (post 38418, 2026-08-17) shipped a draft whose review described the
+      pre-edit body: a mid-repair edit landed 1 minute after the final review,
+      the old severity was WARN, WARN is non-blocking, and a duplicated CTA
+      shipped live unreviewed. An unreviewed shipped draft is exactly the
+      condition the reviewer gate exists to prevent — the freshness check must
+      be able to FAIL for that reason (Rule 14)."""
     draft = ws / "draft.md"
     if not draft.exists():
         return {"gate": "gate_freshness", "status": "PASS", "reason": "no draft.md"}
     stale: list[str] = []
+    review_stale = False
     try:
         draft_mtime = draft.stat().st_mtime
         for name in ("fact-check.json", "humanizer-report.json",
@@ -871,8 +887,18 @@ def check_gate_freshness(ws: Path) -> dict:
             p = ws / name
             if p.exists() and p.stat().st_mtime < draft_mtime:
                 stale.append(name)
+                if name == "review.json":
+                    review_stale = True
     except OSError:
         stale = []  # the guard itself must never break the gate
+    if review_stale:
+        return {"gate": "gate_freshness", "status": "FAIL",
+                "reason": "draft.md is NEWER than review.json — the draft that would ship "
+                          "was never reviewed. RE-DISPATCH the independent reviewer for a "
+                          "fresh provenance-stamped score of the CURRENT draft, then re-run "
+                          f"this gate. (Also stale, advisory: "
+                          f"{[s for s in stale if s != 'review.json']})",
+                "stale_artifacts": stale}
     if stale:
         return {"gate": "gate_freshness", "status": "WARN",
                 "reason": f"draft.md is NEWER than {len(stale)} gate artifact(s): {stale}. "

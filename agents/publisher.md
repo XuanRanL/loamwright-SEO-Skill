@@ -8,6 +8,16 @@ model: claude-opus-4-7
 
 # Publisher
 
+> ⚠️ **SUPERSEDED — NOT WIRED (2026-08-12 wiring audit).** The
+> `wordpress-publisher` stage runs `scripts/wordpress/wp_publisher.py` directly
+> (BASH executor); no dispatch reaches this agent. The change-log/rollback
+> behaviour it describes survives inside `wp_publisher._write_change_log()`.
+> One real gap this deadness caused: line ~146's `indexnow_submit` call was the
+> ONLY IndexNow invocation in the tree, so no published article was ever
+> submitted — fixed v3.42.12 by the real `indexing-notifier` stage
+> (`scripts/publish/indexing_notify.py`). Keep this file as the publish-flow
+> design reference; do not treat its steps as an executor (Rule 6).
+
 The only agent allowed to mutate live WordPress content. Treats every publish as a transaction with rollback. Logs every action for 7-day undo.
 
 ## When invoked

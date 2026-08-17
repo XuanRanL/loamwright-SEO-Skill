@@ -88,6 +88,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts._core.component_headings import classify_heading
+from scripts._core.heading_anchor import ANCHOR_FRAGMENT
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
 WS_ROOT = PLUGIN_ROOT / "memory" / "workspace"
@@ -96,7 +97,8 @@ RESULT_FILENAME = "cta-injection-result.json"
 
 # H2/H3 heading line, tolerating a trailing {#anchor}. re.M is load-bearing:
 # every consumer runs finditer over the whole multi-line body.
-_HEADING_RE = re.compile(r"^(#{2,3})\s+(.+?)\s*(\{#[^}]*\})?\s*$", re.M)
+_HEADING_RE = re.compile(
+    r"^(#{2,3})\s+(.+?)\s*(" + ANCHOR_FRAGMENT + r")?\s*$", re.M)
 # Structural H2s that must never receive the mid CTA (mandatory sections + the
 # References tail). Component headings (TL;DR / By the Numbers / Glossary / ...)
 # are excluded via classify_heading, so they don't need to be listed here.
@@ -201,6 +203,44 @@ def _scan_existing_cta(body: str) -> list[dict[str, Any]]:
         if comp is not None and comp.startswith("cta"):
             found.append({"heading": m.group(2), "offset": m.start()})
     return found
+
+
+def _content_duplicate_errors(body: str, resolved: dict[str, tuple[str, str, str]]) -> list[str]:
+    """CONTENT-IDENTITY duplicate scan — the second idempotency layer (2026-08-17).
+
+    The first layer (_scan_existing_cta, heading classification) has a structural
+    blind spot the 2026-07-08 cure could not close: a block whose heading was
+    hand-renamed to something that classifies as NO component at all is invisible
+    to it. Found live on a real batch (post 38418): a reviewer would-change
+    proposed renaming the injected "One more thing" H3, an operator executed the
+    rename mid-repair, and the driver's re-run then injected a SECOND identical
+    paragraph + [products] shortcode — every downstream check counted only
+    classified/token-tagged blocks, so the live draft shipped with the same CTA
+    twice, one styled, one bare.
+
+    This layer keys on the CONTENT (the sanitized paragraph text and the verbatim
+    shortcode line), which a heading rename cannot hide:
+    - >1 copy of a placement's text/shortcode in the body → duplicate already
+      shipped; fail loudly with the repair path.
+    - >=1 copy while heading-classification says the placement is ABSENT → an
+      unregistered (renamed) copy exists; injecting would create the duplicate,
+      so the injection is refused and the gate fails instead.
+    """
+    errs: list[str] = []
+    for placement, (_heading, raw_text, shortcode) in resolved.items():
+        text = sanitize_copy(raw_text).strip()
+        n_text = body.count(text) if text else 0
+        n_sc = body.count(shortcode.strip()) if shortcode and shortcode.strip() else 0
+        if n_text > 1 or n_sc > 1:
+            errs.append(
+                f"placement '{placement}': CTA content appears {max(n_text, n_sc)}× in the "
+                f"draft (text×{n_text}, shortcode×{n_sc}) — a duplicate CTA block exists, "
+                f"almost certainly one copy under a hand-renamed heading the classifier "
+                f"cannot see. Sanctioned repair: DELETE the copy whose heading is not the "
+                f"registered cta-draft.json heading (heading + paragraph + shortcode "
+                f"line), keep the registered block, then re-run this injector."
+            )
+    return errs
 
 
 def _classify_existing_placements(body: str) -> set[str]:
@@ -463,6 +503,32 @@ def inject(task_id: str, project_slug: str, *, check_only: bool = False) -> dict
     for p in placements:
         if p in existing:
             result["skipped"].append({"placement": p, "reason": "already present (idempotent)"})
+
+    # Second idempotency layer: content identity (2026-08-17). Runs in BOTH
+    # inject and --check modes — a duplicate that already shipped must fail the
+    # --check exactly as hard as it fails the injection run.
+    dup_errors = _content_duplicate_errors(body, resolved)
+    if dup_errors:
+        result["passed"] = False
+        result["errors"].extend(dup_errors)
+    # An unregistered (renamed) copy: classification says absent, content says
+    # present — injecting would mint the duplicate. Refuse those placements.
+    blocked: list[str] = []
+    for p in list(to_apply):
+        _h, raw_text, sc = resolved[p]
+        text = sanitize_copy(raw_text).strip()
+        if (text and text in body) or (sc and sc.strip() and sc.strip() in body):
+            to_apply.remove(p)
+            blocked.append(p)
+    if blocked and not check_only:
+        result["passed"] = False
+        for p in blocked:
+            result["errors"].append(
+                f"placement '{p}': REFUSED to inject — the CTA content already exists in "
+                f"the draft under a heading the classifier does not recognize (a renamed "
+                f"copy). Restore the registered cta-draft.json heading on that block (or "
+                f"delete it) and re-run; injecting now would duplicate the CTA."
+            )
 
     if check_only:
         expected = list(resolved.keys())

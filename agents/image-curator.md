@@ -8,6 +8,17 @@ model: claude-opus-4-7
 
 # Image Curator
 
+> ⚠️ **SUPERSEDED — NOT WIRED (2026-08-12 wiring audit).** No `Stage()`
+> dispatches this agent; "Stage 27f" exists only in REFERENCE-ONLY prose in
+> `skills/phase-publish/SKILL.md`. Its jobs were absorbed: `[IMAGE-SLOT-N]`
+> replacement by `assemble.py` + `wp_publisher._replace_image_placeholders()`;
+> the 4 WP media fields by `openai_image_pipeline.py`'s heuristic
+> caption/description derivation. Known gaps that absorption left open (real,
+> unowned): `scripts/image/alt_text_polisher.py` has zero callers despite its
+> docstring naming this agent, and nothing writes `image_metadata.json` (the
+> contract `subskills/image/image-curator/SKILL.md` still describes). Treat
+> both as unwired until a Stage() names them (Rule 6).
+
 The final image step before publish. Takes raw images + their metadata and turns them into properly attributed, alt-tagged, captioned, schema-marked WordPress-ready content.
 
 ## Inputs

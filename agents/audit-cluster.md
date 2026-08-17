@@ -16,10 +16,12 @@ Blog or pillar pages detected: `crawl-results.json` has `page_type: "blog"|"pill
 - `{audit_dir}/modules/content.json` — content scores (if available)
 
 ## Scripts
-- `python -m scripts.audit.parse_html --file {html} --extract-headings --extract-links --json`
-- `python -m scripts.audit.serp_overlap --queries {file} --domain {domain} --json` (if available)
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — the file is positional; output includes headings and `links.internal`/`links.external` (there are no `--extract-*` flags)
 
-If `serp_overlap` script is unavailable, detect cannibalization by comparing H2 topics and title keywords across pages manually from crawl-results.json.
+SERP-overlap cannibalization confirmation is NOT implemented — no `serp_overlap`
+module exists under `scripts/`. Detect cannibalization by comparing H2 topics and
+title keywords across pages from crawl-results.json (the "suspected" tier below);
+never report the "confirmed" tier without real SERP data.
 
 ## Checks
 

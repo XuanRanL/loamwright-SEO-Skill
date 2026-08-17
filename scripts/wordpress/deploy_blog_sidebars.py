@@ -446,10 +446,30 @@ def main() -> int:
                 if r.get(k):
                     print(f"    {k}: {r[k]}")
 
-    # Drift and failure are actionable; exit non-zero so CI/callers notice.
-    bad = [r for r in results
-           if r["status"] in ("DRIFTED", "failed", "unreachable", "refused")]
-    return 1 if bad else 0
+    return resolve_exit(results)
+
+
+def resolve_exit(results: list[dict[str, Any]]) -> int:
+    """Exit code for a run: 0 ONLY when every result is verified ``in_sync``.
+
+    v3.42.14 root cure (2026-08-12 release audit, top-ranked inert check). The
+    old mapping was a BLOCKLIST — ``("DRIFTED", "failed", "unreachable",
+    "refused")`` — so every status it did not enumerate exited 0. That included
+    ``not_deployed`` ("the mu-plugin is absent on the host, transport verified
+    working"): MAXIMUM drift, and the literal project-alpha scenario this module's
+    own docstring cites as its reason to exist. ``manual`` and
+    ``not_generated`` also read as success. A blocklist of bad states is how a
+    NEW bad state ships as a green check; the allowlist inverts the default so
+    an unanticipated status fails loudly instead of silently passing
+    (Rule 12/14: "I could not verify it" is never "it matches").
+
+    The status string in the report still distinguishes transport
+    (``unreachable``) from content (``not_deployed``/``DRIFTED``) per Rule 13 —
+    the exit code is deliberately binary to match the fleet-wide
+    ``hop3_drift.check_exit_code`` contract (unreadable and drifted are both
+    non-zero).
+    """
+    return 0 if all(r.get("status") == "in_sync" for r in results) else 1
 
 
 if __name__ == "__main__":

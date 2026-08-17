@@ -221,6 +221,39 @@ exists to validate a re-tune):
   cross-domain coverage of one story never merges) — the 0.25 weight
   discriminates nothing.
 
+**FIXED 2026-08-12 (v3.42.11) — relevance was scored against the wrong words.**
+The runner used to feed `content_strategy.primary_clusters` into the relevance
+scorer. Those are SERVICE-LINE labels ("Technical SEO", "Local SEO") describing
+what the agency sells, not the vocabulary industry news is written in. Measured
+on the seven hand-curated items of the 2026-08-12 issue, **6 of 7 scored 0.0** —
+the "definitely off-topic, worse than unknown" verdict — so the 0.20 relevance
+weight was not merely dead but *anti-correlated*, and freshness alone decided the
+issue. That is why the ranker mis-selected five issues running.
+
+The scorer's arithmetic was correct and is unchanged (a lone common word like
+"local" must not match "Local SEO" — two tests pin that in both directions). What
+changed is the SOURCE: `_digest_relevance_terms()` now prefers
+`weekly_digest.relevance_terms` and falls back to `primary_clusters` only when a
+project has not supplied one.
+
+**Each project should set `weekly_digest.relevance_terms`** to short NEWS-topic
+phrases in the vocabulary its trade press actually uses ("AI Overviews",
+"algorithm update", "Search Console"), NOT to its service lines. Keep phrases
+specific: multi-word terms need ≥2 overlapping tokens, and a bare "SEO" would
+match everything. With loamwright's 35-term list the same seven items score
+1.000 (6 of 7), while a bakery story still scores 0.0.
+
+**Follow-ups are now capped** at `weekly_digest.max_followups_per_issue`
+(default 2, and at least one fresh slot is always reserved). Previously they had
+first claim on the entire `items_per_issue` budget without ever being ranked, so
+3 of 7 slots on 2026-08-12 went to continuing stories carrying an empty summary
+and a hardcoded 0.5 significance. A published follow-up is also now **closed**
+(`developing` → `reported`) by `close_published_followups`; before this the same
+three entries would have recycled on 08-19 and 08-26.
+
+Step 4b curation review is still MANDATORY — these fixes improve the ranking
+inputs, they do not replace editorial judgment.
+
 When the picks are wrong, HAND-CURATE from the Tier-B pool (`tier-b.json`):
 clone `build_digest()`'s item shape exactly, use positional cluster ids, and
 repair `projects/{slug}/weekly/covered.json` in BOTH directions under
@@ -390,7 +423,17 @@ Verification: {verification_summary}
 To publish live, reply "publish" or "发布".
 ```
 
-On explicit confirmation → PATCH `status: "publish"` → re-verify the live public URL.
+On explicit confirmation → run THE flip executor (v3.42.16 — one command owns
+PATCH → live re-verify → indexing re-run; never hand-run the three steps):
+
+```bash
+python -m scripts.wordpress.flip_post_live {slug} --workspace {tid} --json
+```
+
+Exit 0 = flipped + live-verified + submitted. Exit 2 = flipped + live-verified but
+NOT submitted (no_credentials/transport — resolve, then re-run indexing_notify).
+Exit 1 = hard failure; the flip is NOT complete. Evidence: workspace
+flip-result.json + verify-live-result.json.
 
 ---
 

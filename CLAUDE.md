@@ -782,7 +782,12 @@ Limits in `~/.xuanran-seo/config.yaml`.
 - `pytest tests/` — unit tests for scripts
 - `python -m evals.run_all` — per-skill LLM-judge evals
 - `python -m evals.integration` — end-to-end pipeline tests
-- CI: GitHub Actions on every commit
+- CI: **NONE — there is no `.github/` directory** (2026-08-12 audit; this line
+  falsely claimed "GitHub Actions on every commit" since the repo's creation).
+  Every green check is hand-run. The enforcement that actually exists is the
+  Rule 7 discipline: run the FULL `pytest tests/` suite immediately before every
+  commit, plus the three Rule-14 executors before declaring a cross-cutting
+  change done. If real CI is ever added, wire exactly those four commands.
 
 ## Versioning
 

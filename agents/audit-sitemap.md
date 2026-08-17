@@ -18,7 +18,7 @@ You are a sitemap auditor. You verify that the XML sitemap ecosystem is correctl
 
 ## Scripts
 
-- `python -m scripts.audit.fetch_page --url {url} --raw --json` — fetch sitemap XML files
+- `python -m scripts.audit.fetch_page {url} --output {path} --json` — fetch sitemap XML files (URL is positional; there is no `--raw` flag — `--output` saves the raw body to a file)
 - Parse XML content directly from fetched output
 
 ## Reference Files

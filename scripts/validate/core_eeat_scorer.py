@@ -22,6 +22,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
 
+from scripts._core.faq_questions import extract_faq_questions
+from scripts._core.heading_anchor import ANCHOR_FRAGMENT
 from scripts.lint._text_utils import iter_h2_sections, iter_paragraphs, strip_markdown, count_words
 
 
@@ -93,28 +95,20 @@ def _check_R10_prompt_injection(text: str) -> bool:
 _CONCLUSION_FALLBACK = r"^(Conclusion|Verdict|Final Verdict|The Bottom Line|Final Thoughts|The Last Sip|A Final Thought|In Closing)"
 _FAQ_FALLBACK = r"^(Frequently Asked Questions|FAQ|Common Questions|Questions)"
 
-# The FAQ QUESTION forms this pipeline actually emits. Kept deliberately identical to
-# scripts/lint/paa_alignment_check.py :: _BOLD_Q_RE / _H3_Q_RE — two checkers reading the
-# same FAQ must not disagree about how many questions are in it (Rule 12).
-_FAQ_BOLD_Q_RE = re.compile(r"^\s*\*\*(.+?)\*\*\s*$", re.M)
-_FAQ_H3_Q_RE = re.compile(r"^###\s+(.+?)\s*(\{#[^}]*\})?\s*$", re.M)
-
 
 def _count_faq_questions(faq_body: str) -> int:
-    """Count FAQ questions in EITHER form the pipeline emits.
+    """Count FAQ questions in EITHER form the pipeline emits — via the ONE shared
+    extraction in scripts/_core/faq_questions.
 
-    C10 previously counted only `^###`. Every writer agent in this project emits FAQ
-    questions as bold paragraphs (`**Question?**`) — that is what the paa-answer-writer
-    contract produces and what schema-generator extracts into FAQPage — so C10 scored 0
-    questions on articles carrying 7-8 of them and failed a criterion they fully satisfied.
-    Measured on the 2026-08-05 project-alpha batch: 0 counted vs 7, 8, 8 actual.
-
-    Bold-first, mirroring paa_alignment_check: an H3-form FAQ can legitimately contain
-    bold runs inside its answers, so preferring bold there would over-count.
+    History: C10 first counted only `^###` while every writer emits bold-paragraph
+    questions (0 counted vs 7-8 actual, v3.42.8). The v3.42.8 fix duplicated
+    paa_alignment_check's regex PAIR here but not its question-shape FILTER, so the
+    two checkers still disagreed (6 vs 3 on one real FAQ, 2026-08-12 audit): C10
+    counted bold lead-ins like `**Bottom line:**` as questions. Both checkers now
+    call scripts._core.faq_questions — a candidate must contain '?' or start with
+    a question word, so "≥5 substantive questions" means QUESTIONS (Rule 12).
     """
-    return len(
-        list(_FAQ_BOLD_Q_RE.finditer(faq_body)) or list(_FAQ_H3_Q_RE.finditer(faq_body))
-    )
+    return len(extract_faq_questions(faq_body))
 
 
 def _project_h2_pattern(project_slug: str | None, section_id: str) -> str | None:
@@ -145,7 +139,7 @@ def _mandatory_section_body(
     lines = text.splitlines()
     start = None
     for i, line in enumerate(lines):
-        m = re.match(r"^##\s+(.*?)\s*(?:\{#[^}]*\})?\s*$", line)
+        m = re.match(r"^##\s+(.*?)\s*(?:" + ANCHOR_FRAGMENT + r")?\s*$", line)
         if m and h2_re.match(m.group(1).strip()):
             start = i
             break

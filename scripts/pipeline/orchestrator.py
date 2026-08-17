@@ -23,6 +23,7 @@ from pathlib import Path
 from scripts._core import file_bus  # tolerant_json_load: self-heals subagent JSON tool-tag leaks
 from scripts._core import file_lock  # is_locked: real OS-lock liveness, not sidecar existence
 from scripts._core.provenance import PROVENANCE_REQUIRED  # single _generated_by source (v3.41.3)
+from scripts._core.review_target import review_target  # ONE reviewer-target resolver (2026-08-17)
 from scripts.pipeline import fc_verdict  # ONE verdict classifier for all gates (2026-08-02)
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -455,7 +456,7 @@ STAGES: list[Stage] = [
           ["draft.md", "citations.json"], ["review.json"],
           description="Dispatch independent reviewer subagent for fresh-editor E-E-A-T evaluation. Target score >= 80. MUST use the subagent — do NOT write review.json yourself.",
           subagent_type="xuanran-seo-blog-writer:reviewer",
-          dispatch_prompt="Review draft.md as a fresh editor with NO pipeline history. Score 0-100 on E-E-A-T + AI citability. Run an explicit CROSS-SECTION NUMERIC CONSISTENCY sweep: any metric restated across TL;DR / Abstract / Key Takeaways / tables / By-the-Numbers / FAQ / Conclusion must carry the SAME numbers, and any enumerated framework ('the 12 tests') must be referenced with its real count everywhere (the 2026-07-06 batch shipped one pricing band stated 4 different ways and a 6-check scorecard introduced as 'ten questions'); flag drift with BOTH locations quoted. NOTE: '### Your next step' CTA blocks are config-authored and machine-verified (business-context.cta + verify check 29) — do NOT spend a would-change item proposing their removal or rewording; placement observations go in notes only. Provide 3 'would change' items. Write review.json. Must include _generated_by: 'reviewer-subagent'."),
+          dispatch_prompt="Review draft.md as a fresh editor with NO pipeline history. Score 0-100 on E-E-A-T + AI citability. Run an explicit CROSS-SECTION NUMERIC CONSISTENCY sweep: any metric restated across TL;DR / Abstract / Key Takeaways / tables / By-the-Numbers / FAQ / Conclusion must carry the SAME numbers, and any enumerated framework ('the 12 tests') must be referenced with its real count everywhere (the 2026-07-06 batch shipped one pricing band stated 4 different ways and a 6-check scorecard introduced as 'ten questions'); flag drift with BOTH locations quoted. NOTE — CTA blocks are config-authored and machine-verified (business-context.cta + verify checks 29/30): FIRST read memory/workspace/{task_id}/cta-draft.json :: blocks[*].heading — THOSE exact headings (plus their single paragraph and any [products] shortcode) are the machine-owned CTA blocks in this draft; do NOT spend a would-change item proposing their removal, renaming, or rewording (a 2026-08-17 reviewer proposed renaming the registered 'One more thing' H3 because it only knew example headings; the operator executed the rename and the injector then shipped a duplicated CTA — post 38418); placement observations go in notes only. Provide 3 'would change' items. Write review.json. Must include _generated_by: 'reviewer-subagent'."),
     Stage("image-pipeline-join", "publish", "CHECK",
           ["image-prompts.json"], ["images.json"],
           description="Verify Fork B completed and images.json exists"),
@@ -486,7 +487,25 @@ STAGES: list[Stage] = [
     Stage("verify-post", "publish",
           "BASH:python -m scripts.wordpress.verify_post {project_slug} {post_id} --workspace {task_id} --expected-status draft --json --out {ws}/verify-result.json",
           ["publish-result.json"], ["verify-result.json"],
-          description="27-check structural verification of published post"),
+          description="Structural verification of the published post (full check "
+                      "battery in scripts/wordpress/verify_post.py — the count is "
+                      "deliberately not stated here; a hardcoded number went stale "
+                      "twice)"),
+    Stage("indexing-notifier", "publish",
+          "BASH:python -m scripts.publish.indexing_notify {project_slug} --workspace {task_id} --json",
+          ["verify-result.json"], ["indexing-result.json"],
+          is_mandatory=False,
+          description="Submit the live URL to Bing IndexNow (Bing + ChatGPT-via-Bing + "
+                      "Yandex). Wired v3.42.12 — the subskill claimed 'final step of "
+                      "phase-publish' for months with no Stage (Rule 6; the only caller "
+                      "of indexnow_submit was the dead agents/publisher.md). NOTIFIER, "
+                      "not a gate: drafts record outcome=skipped_draft (Rule 5a — never "
+                      "ping a draft URL; re-run the script after the operator flips the "
+                      "post live), and submit/transport failures record an honest "
+                      "outcome but never block a pipeline whose article already "
+                      "published and verified (same never-blocks contract as "
+                      "image-visual-qa). GSC URL-inspection stays a documented manual "
+                      "step: per-site OAuth + strict quotas across a 13-site fleet."),
 ]
 
 
@@ -523,7 +542,15 @@ def _cta_brief_present(ws: Path) -> bool:
         shortcode AND null target_url) has nothing to convert on, so it behaves
         exactly like the sentinel: cta-writer is skipped, not dispatched with an
         empty offer.
-    In both shapes `skipped_no_config` (the sentinel flag) forces False."""
+    In both shapes `skipped_no_config` (the sentinel flag) forces False.
+
+    A `resolution_failed` brief (v3.42.4: configured offers that could NOT be
+    resolved — broken catalog sync, unreachable config) also derives False here
+    (there is genuinely no offer to write about), but it must NEVER reach this
+    derivation as a completed stage: the cta-brief-builder branch of
+    _content_gate_reason() fails the stage first, so the pipeline routes to
+    fix/re-dispatch instead of auto-skipping the CTA stages as if the project
+    had no config (2026-08-12 audit)."""
     p = ws / "cta-brief.json"
     if not p.exists():
         return False
@@ -732,7 +759,12 @@ _PASS_FLAG_REQUIRED = {
     # regardless of content. That inverts the intended "presence is enough"
     # behavior into "never valid". Plain existence + JSON-parseability (already
     # enforced by _artifact_valid's generic checks above) is the correct/only
-    # gate for this artifact; do not add it here.
+    # gate for this artifact; do not add it here. (2026-08-12: the v3.42.4
+    # `resolution_failed` sentinel IS content-gated, but via the
+    # cta-brief-builder branch of _content_gate_reason — the shared helper both
+    # completion paths read — not via this pass-flag map, precisely because the
+    # artifact has no boolean `passed` and the legitimate skipped_no_config
+    # sentinel must keep validating.)
     # v3.35 lint gates (paa-answer-writer + localization-pass root cures).
     "paa-alignment-lint.json": "passed",
     "locale-spelling-lint.json": "passed",
@@ -1008,10 +1040,10 @@ def _content_gate_reason(ws: Path, stage_name: str) -> str | None:
         try:
             _score = int(json.loads(p.read_text(encoding="utf-8")).get("score", 0))
             _state = json.loads((ws / "state.json").read_text(encoding="utf-8"))
-            _target = int((_state.get("brief") or {}).get("quality_target_score") or 80)
+            _target = review_target(_state)
         except Exception:
             return None  # unreadable artifacts: leave to provenance/missing checks
-        if _target and _score < _target:
+        if _score < _target:
             return (
                 f"review.json score {_score} < state.brief.quality_target_score {_target}. "
                 "Repair the draft per review.json would_change[], then RE-DISPATCH the "
@@ -1093,6 +1125,39 @@ def _content_gate_reason(ws: Path, stage_name: str) -> str | None:
                 f"images.json entries point at missing files: {dangling}. Re-run the "
                 "producing executor for those slots (render_data_charts / image fork); "
                 "do NOT hand-edit paths."
+            )
+        return None
+
+    if stage_name == "cta-brief-builder":
+        # 2026-08-12 release audit (Rule 12/14): the v3.42.4 `resolution_failed`
+        # sentinel was PRODUCER-only — cta_brief_builder wrote it and exited 1,
+        # but no completion-deciding path read it. _cta_brief_present() correctly
+        # derives False (there is no usable offer), which auto-skips the four CTA
+        # stages — the exact behavior reserved for a project with NO
+        # conversion_offers — so a configured project whose catalog was
+        # unreachable/empty shipped every article with no CTA while the runner
+        # reported COMPLETE. The sentinel split exists to tell "sells nothing"
+        # from "sells things, offers unreachable"; this gate is its READER, in
+        # the ONE shared helper both verify_stage() and next_stage()'s RC-A
+        # auto-satisfy call (the v3.35.3 lesson). The legitimate
+        # skipped_no_config sentinel keeps passing, so the 5 projects without
+        # conversion_offers continue to auto-skip quietly.
+        p = ws / "cta-brief.json"
+        if not p.exists():
+            return None
+        try:
+            brief = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None  # unreadable file is handled by _artifact_valid/missing paths
+        if isinstance(brief, dict) and brief.get("resolution_failed") is True:
+            cause = str(brief.get("resolution_failure_reason") or "no reason recorded")
+            return (
+                f"cta-brief.json says resolution_failed=true: this project HAS "
+                f"conversion_offers config but the offers could not be resolved — "
+                f"{cause} Fix the underlying config/catalog, then re-run "
+                "cta-brief-builder for a fresh brief. Do NOT hand-edit the "
+                "sentinel: a failed resolution must never be recorded as the "
+                "no-config auto-skip."
             )
         return None
 

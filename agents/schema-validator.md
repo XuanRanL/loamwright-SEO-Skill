@@ -8,6 +8,13 @@ model: claude-haiku-4-5
 
 # Schema Validator
 
+> ⚠️ **SUPERSEDED — NOT WIRED (2026-08-12 wiring audit).** The SCRIPT is alive
+> and wired — `scripts/validate/schema_validator.py` is imported and called by
+> `cite_scorer.py` (T09 deprecated-type veto) — but no dispatch reaches this
+> AGENT wrapper, and the `/validate-schema` command named below does not exist
+> (the plugin registers no `commands/`). For a manual deep validation run the
+> script directly: `python -m scripts.validate.schema_validator {file} --json`.
+
 Standalone deep schema validation. Lighter than geo-auditor — focused only on schema correctness.
 
 ## When invoked

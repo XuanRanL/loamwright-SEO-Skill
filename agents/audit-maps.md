@@ -14,9 +14,14 @@ Only run when `audit-local` was spawned AND at least one of: geoapify key, dataf
 - `{audit_dir}/modules/local.json`, `{audit_dir}/gbp-data.json`, `{audit_dir}/config.json`
 
 ## Scripts
-- `python -m scripts.audit.geoapify_grid --lat {lat} --lng {lng} --radius {km} --keyword {kw} --json`
-- `python -m scripts.audit.gbp_field_audit --profile {gbp_json_path} --json`
-- `python -m scripts.audit.review_sentiment --reviews {reviews_path} --json`
+None. The three helpers this section used to advertise (`geoapify_grid`,
+`gbp_field_audit`, `review_sentiment`) were NEVER implemented — no such modules
+exist under `scripts/` (only a geoapify credential slot exists in
+`credential_hub`). Do not invoke them; do the checks below manually from
+`{audit_dir}/gbp-data.json`, `modules/local.json`, and `config.json`. For
+geo-grid ranking there is NO executor: set `geo_grid.available = false` and
+redistribute its scoring weight (the Scoring section already defines the
+no-geo-grid weights).
 
 ## Checks
 

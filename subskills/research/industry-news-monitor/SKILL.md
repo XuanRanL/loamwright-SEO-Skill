@@ -191,12 +191,23 @@ significance = 0.30 × recency
 ```
 
 `recency` = 1.0 for items published today, 0.0 for items 7+ days old.
-`project_terms` comes from `business-context.json :: content_strategy.primary_clusters`.
+`project_terms` comes from `_digest_relevance_terms(bc)` (v3.42.11): it prefers
+`business-context.json :: weekly_digest.relevance_terms` — short NEWS-topic phrases in the
+vocabulary the trade press actually writes in — and falls back to
+`content_strategy.primary_clusters` only when a project has not supplied one. Feeding
+primary_clusters directly (the pre-v3.42.11 behaviour this line used to document) is a
+category error: those are SERVICE-LINE labels, and on real harvests they scored 6 of 7
+on-topic items 0.0, making the 0.20 weight anti-correlated (see skills/weekly-digest
+Step 4b for the full account and per-project setup guidance).
 `authority_domains` is derived from the project's RSS feeds + NewsAPI domains, plus an
 optional explicit `weekly_digest.authority_domains` override.
 
-Clusters are sorted descending; only the top `items_per_issue` (default 7) appear in the
-digest body.
+Clusters are sorted descending. Follow-ups are capped at
+`weekly_digest.max_followups_per_issue` (default 2, ≥1 fresh slot always reserved) and a
+follow-up PUBLISHED this issue is closed to `reported` by `close_published_followups`
+(v3.42.13 — its first version read the cluster shape instead of the item shape and silently
+no-opped; the regression test now drives `_emit_followups` itself). Only the top
+`items_per_issue` (default 7) appear in the digest body.
 
 ---
 

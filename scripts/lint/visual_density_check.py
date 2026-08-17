@@ -28,6 +28,8 @@ import re
 import sys
 from pathlib import Path
 
+from scripts._core.heading_anchor import ANCHOR_FRAGMENT
+
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
 WS_ROOT = PLUGIN_ROOT / "memory" / "workspace"
 
@@ -72,7 +74,7 @@ def _heading_ids(body: str) -> list[str]:
     """Slugged ids of the article's H2s (matches the publisher's slugify closely enough
     for the fixed component headings we care about)."""
     ids = []
-    for m in re.finditer(r"^##\s+(.+?)\s*(\{#[^}]+\})?\s*$", body, re.M):
+    for m in re.finditer(r"^##\s+(.+?)\s*(" + ANCHOR_FRAGMENT + r")?\s*$", body, re.M):
         text = m.group(1)
         slug = re.sub(r"[^a-z0-9\s-]", "", text.lower()).strip()
         slug = re.sub(r"\s+", "-", slug)

@@ -132,8 +132,21 @@ unresolvable name aborts before any WP write (create deliberately at init via
        (c) CLI invocation included `--status=publish`
    The phrase "post it" is ambiguous (could mean "create the post") and does NOT satisfy (b).
 
-9. ON CONFIRMATION (or pre-authorized): PATCH /wp-json/wp/v2/posts/{id} {"status": "publish"}
-   Then RE-VERIFY against the PUBLIC live URL (the canonical SEO URL with /{slug}/, not the ?p= preview URL).
+9. ON CONFIRMATION (or pre-authorized): run THE flip executor — one command owns
+   the whole PATCH → live-URL re-verify → indexing re-run sequence (v3.42.16;
+   before this, the three sub-steps were a checklist duplicated across three
+   SKILL.md files with no executor and no verification — Rule 6/11/14):
+
+       python -m scripts.wordpress.flip_post_live {project_slug} --workspace {task_id} --json
+
+   Exit 0 = flipped + live-verified + submitted to IndexNow. Exit 2 = flipped and
+   live-verified but the URL was NOT submitted (no_credentials / transport —
+   resolve and re-run indexing_notify; never ignore silently). Exit 1 = hard
+   failure (PATCH failed or live verification failed — the post needs fixing;
+   the flip is NOT complete). The full evidence lands in the workspace as
+   flip-result.json + verify-live-result.json (the draft-phase verify-result.json
+   is pipeline history and is deliberately not overwritten).
+   Never hand-run the PATCH + re-verify + indexing steps separately again.
 ```
 
 ### HARD RULE — Project article CSS is mandatory
@@ -145,9 +158,11 @@ Pattern reference: see `skills/seo-blog/SKILL.md` Hard Rules section for the can
 ## Stage 3: Indexing & Monitor Registration
 
 ```
-30. indexing-notifier
-    - IndexNow → POST api.indexnow.org/indexnow with single-URL payload
-    - GSC URL Inspection submit (if creds present)
+30. indexing-notifier  (REAL runner stage since v3.42.12 — runs after verify-post)
+    - Executor: python -m scripts.publish.indexing_notify {project_slug} --workspace {task_id} --json
+    - Draft post → outcome=skipped_draft (Rule 5a; the post-flip re-run in step 9 submits)
+    - GSC URL Inspection stays MANUAL (per-site OAuth + strict quotas; see
+      subskills/publish/indexing-notifier/SKILL.md)
 
 31. change-log writer
     - projects/{slug}/change-log.json append entry

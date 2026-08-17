@@ -42,44 +42,28 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
-from scripts._core import cost_estimator, cost_ledger
+from scripts._core import cost_estimator, cost_ledger, format_registry
 from scripts._core.file_bus import PLUGIN_ROOT
 
 
 EntryStatus = Literal["pending", "running", "completed", "failed", "skipped"]
 
-_FORMAT_ENUM_SCHEMA = PLUGIN_ROOT / "schemas" / "angle.schema.json"
-
-# Fallback only — used if the schema is unreadable. NEVER edit this by hand to add a
-# format; the authoritative list is angle.schema.json :: properties.format_id.enum.
-_FORMAT_FALLBACK = {
-    "listicle", "how-to-guide", "pillar-page", "comparison",
-    "case-study", "definition", "news-analysis", "product-review",
-    "shortlist-validation", "faq-knowledge",
-}
+_FORMAT_ENUM_SCHEMA = format_registry.FORMAT_ENUM_SCHEMA
 
 
 def _load_valid_formats() -> set[str]:
-    """Single source of truth = angle.schema.json's format_id enum (25 formats).
+    """Single source of truth = angle.schema.json's format_id enum.
 
     v3.41.4 root cure: this set used to be a hand-maintained 10-item literal that had
     drifted a generation behind schemas/ and templates/ (26 template files). A CSV row
     naming a real-but-unlisted format (`buyers-guide`, `encyclopedic`, `roundup`, ...)
     silently fell back to `listicle`, so the whole article was planned and written in
     the wrong format with no error anywhere — a Rule-6/Rule-12 class silent no-op.
+
+    v3.42.11: the reader moved to scripts._core.format_registry so cost_estimator
+    shares it instead of keeping a second (also-stale) copy — see that module.
     """
-    try:
-        schema = json.loads(_FORMAT_ENUM_SCHEMA.read_text(encoding="utf-8"))
-        enum = schema["properties"]["format_id"]["enum"]
-        if isinstance(enum, list) and enum:
-            return {str(f) for f in enum}
-    except (OSError, ValueError, KeyError, TypeError) as exc:  # pragma: no cover
-        print(
-            f"[batch_queue] WARNING: could not read format enum from "
-            f"{_FORMAT_ENUM_SCHEMA} ({exc}); falling back to the built-in list.",
-            file=sys.stderr,
-        )
-    return set(_FORMAT_FALLBACK)
+    return format_registry.load_valid_formats(source="batch_queue")
 
 
 VALID_FORMATS = _load_valid_formats()

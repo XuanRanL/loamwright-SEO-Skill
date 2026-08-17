@@ -1,6 +1,6 @@
 # 47 Entity Signals
 
-> Used by `entity-extractor` agent + `subskills/cross-cutting/entity-optimizer/` to maintain `memory/entities/{id}.md`.
+> DESIGN REFERENCE ONLY (2026-08-12 wiring audit): its named consumers — the `entity-extractor` agent and `subskills/cross-cutting/entity-optimizer/` — are both PARKED/not wired, so nothing currently maintains `memory/entities/{id}.md` from this spec.
 >
 > Each entity has up to 47 signals across 5 categories. Progressive sedimentation (Wiki Phase 1/2/3) per mention count.
 

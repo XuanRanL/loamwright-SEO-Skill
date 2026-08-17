@@ -24,6 +24,8 @@ import html as _html
 import re
 from typing import Final
 
+from scripts._core.heading_anchor import ANCHOR_INLINE_RE
+
 # component_id -> spec.
 #   phrases: canonical + alias phrases (lowercase). Matching (see classify_heading):
 #     exact | prefix + separator (topic-scoped) | suffix ("This Week at a Glance").
@@ -117,7 +119,7 @@ _SEPARATORS: Final[tuple[str, ...]] = (":", " -", " —", " –", "|")
 def _normalize(text: str) -> str:
     """Heading text → matchable form: strip tags/anchors/entities/numbering, lower."""
     t = re.sub(r"<[^>]+>", "", text)
-    t = re.sub(r"\{#[^}]*\}", "", t)
+    t = ANCHOR_INLINE_RE.sub("", t)
     t = _html.unescape(t)
     t = re.sub(r"^\s*\d+[.)]\s*", "", t)
     return " ".join(t.split()).strip().lower()

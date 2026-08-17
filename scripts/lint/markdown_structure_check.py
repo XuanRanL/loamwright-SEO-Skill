@@ -56,7 +56,11 @@ _REQUIRED_SECTIONS: dict[str, list[str]] = {
     "key_takeaways":  ["key takeaways", "takeaways", "quick takeaways", "what you'll learn"],
     "toc":            ["table of contents", "toc", "in this article", "contents"],
     "faq":            ["faq", "frequently asked", "common questions", "questions"],
-    "conclusion":     ["conclusion", "final thoughts", "wrap-up", "verdict", "bottom line"],
+    # "final verdict" is listed explicitly: stripping a leading article rescues
+    # "The Bottom Line: ..." but nothing rescues "Final Verdict: ..." from the bare
+    # "verdict" alias, and both are conclusion openers the project CLAUDE.md mandates.
+    "conclusion":     ["conclusion", "final thoughts", "wrap-up", "final verdict",
+                       "verdict", "bottom line"],
     "references":    ["references", "sources", "bibliography", "citations", "works cited"],
 }
 
@@ -111,6 +115,39 @@ def _normalize_h2(text: str) -> str:
     return re.sub(r"[^\w\s]", "", _H2_ANCHOR_SUFFIX_RE.sub("", text)).strip().lower()
 
 
+# A leading article carries no matching signal, and every project CLAUDE.md in this repo
+# MANDATES a conclusion opener of "Conclusion: ...", "The Bottom Line: ...", or
+# "Final Verdict: ...". Two of those three begin with a word the alias table does not
+# contain, so prefix matching alone could never find them: "the bottom line diagnose
+# first ..." does not start with "bottom line". The lint then reported a missing
+# conclusion on drafts that followed the plugin's own rule (caught 2026-08-12 on a real
+# project-alpha draft; anchor_link_builder._TOC_EXCLUSION_WHITELIST already whitelisted
+# "the bottom line", so two layers disagreed about the same fact -- Rule 11).
+_LEADING_ARTICLE_RE = re.compile(r"^(?:the|a|an|our|my)\s+")
+
+
+def _matches_alias(h2_text: str, alias_norm: str) -> bool:
+    """True when an H2 satisfies one normalized alias.
+
+    Plain prefix match on the normalized heading, plus a narrower second chance for a
+    heading that opens with an article. That second chance is deliberately NOT a plain
+    prefix match: allowing one would make the generic single-word alias "verdict" swallow
+    "A Verdict Is Not a Diagnosis Yet". So on the article-stripped form an alias counts
+    only when it is either multi-word (specific enough that a leading article is the only
+    difference, e.g. "the bottom line ..." vs "bottom line") or an exact whole-heading
+    match (e.g. "The Conclusion" -> "conclusion").
+    """
+    norm = _normalize_h2(h2_text)
+    if norm.startswith(alias_norm):
+        return True
+    stripped = _LEADING_ARTICLE_RE.sub("", norm)
+    if stripped == norm:
+        return False
+    if " " in alias_norm:
+        return stripped.startswith(alias_norm)
+    return stripped == alias_norm
+
+
 def _find_section(h2_sections: list, names: list[str]) -> tuple[int, "object"] | None:
     """Find first H2 matching any of the given names."""
     name_set = set(names)
@@ -143,7 +180,7 @@ def analyze(text: str) -> StructureReport:
         # variants ("References and Further Reading", "Summary of Findings").
         found_sections = [
             s for s in h2s
-            if any(_normalize_h2(s.h2_text).startswith(a) for a in aliases_norm)
+            if any(_matches_alias(s.h2_text, a) for a in aliases_norm)
         ]
         rep.sections.append(SectionFinding(
             canonical_name=canonical,

@@ -17,7 +17,12 @@ Workspace layout (memory/workspace/{task_id}/):
     final.md
     quality.json
     review.json
-    .history/{stage}.md     ← per-stage snapshots
+    .history/{stage}.md     ← per-stage snapshots — AVAILABLE, NOT AUTO-INVOKED
+                              (snapshot_history() exists but no pipeline stage
+                              calls it; the dir stays empty in normal runs. The
+                              2026-08-17 dual-repair forensics had no snapshot
+                              trail for exactly this reason — call it explicitly
+                              before risky in-place draft surgery.)
 
 Why files not shared context:
     - Resumable on crash (no in-memory state lost)

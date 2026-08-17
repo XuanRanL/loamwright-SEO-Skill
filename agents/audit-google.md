@@ -15,10 +15,10 @@ At least one Google credential configured in `{audit_dir}/config.json :: api_key
 - `{audit_dir}/crawl-results.json` — URL list for per-page CrUX lookups
 
 ## Scripts
-- `python -m scripts.audit.pagespeed_check --url {url} --crux-only --json`
-- `python -m scripts.audit.google_auth --service {crux|gsc|ga4} --json`
-- `python -m scripts.audit.gsc_fetch --property {url} --days {N} --json`
-- `python -m scripts.audit.ga4_fetch --property-id {id} --metric organic_sessions --days {N} --json`
+- `python -m scripts.audit.pagespeed_check {url} --crux-only --json` (URL is positional)
+- `python -m scripts.audit.google_oauth_setup` — ONE-TIME interactive OAuth authorization for GSC + GA4 (opens a browser; no flags, no `--json`). Run only if `~/.xuanran-seo/credentials/google-oauth-token.json` is missing; `gsc_fetch`/`ga4_fetch` read the stored token themselves.
+- `python -m scripts.audit.gsc_fetch --property {siteUrl} --days {N} --json`
+- `python -m scripts.audit.ga4_fetch --property-id {id} --metrics sessions,totalUsers --days {N} --json`
 
 ## Checks
 

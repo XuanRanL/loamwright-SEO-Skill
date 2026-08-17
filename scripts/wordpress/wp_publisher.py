@@ -47,6 +47,7 @@ from pathlib import Path
 from typing import Literal
 
 from scripts._core import file_bus
+from scripts._core import heading_anchor
 from scripts.build.markdown_to_html import convert as md_to_html, ConvertOptions, split_frontmatter, strip_scaffold_markers
 from scripts.wordpress import wp_taxonomy, wp_media
 from scripts.wordpress.wp_client import WPClient, WPApiError
@@ -1301,7 +1302,8 @@ def _has_existing_references_block(body: str) -> bool:
     the auto-append silently skipped, leaving the post with NO References.
     """
     # Markdown form (with optional Pandoc anchor {#references} suffix from assembly)
-    if re.search(r"^##+\s*References\s*(\{#[^}]+\})?\s*$", body, re.MULTILINE | re.IGNORECASE):
+    if re.search(r"^##+\s*References\s*(?:" + heading_anchor.ANCHOR_FRAGMENT + r")?\s*$",
+                 body, re.MULTILINE | re.IGNORECASE):
         return True
     # Raw HTML form (most common when upstream produces references.md as HTML)
     if re.search(r"<h2[^>]*>\s*References\s*</h2>", body, re.IGNORECASE):

@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
-"""Pipeline stage checklist — tracks which stages have actually run.
+"""Pipeline stage checklist — DIAGNOSTIC audit CLI over pipeline-checklist.json.
 
-Called by the LLM orchestrator at the START of each stage to register
-intent, and at the END to register completion. The pre_publish_gate
-reads this checklist to enforce that mandatory stages were executed.
+HONESTY BANNER (2026-08-17 wiring audit — Rule 6/12/14). This module's docstring
+used to claim "the pre_publish_gate reads this checklist to enforce that
+mandatory stages were executed." That was FALSE: no production code path ever
+imported this module or invoked its CLI — live enforcement is, and remains,
+`orchestrator._PASS_FLAG_REQUIRED` + `run_pipeline._GATE_STAGES` +
+`orchestrator._content_gate_reason` (the per-workspace pipeline-checklist.json
+FILE is orchestrator-owned; the orchestrator reads/writes it directly, not
+through this module). What this module actually is: a standalone diagnostic —
+`--action audit` answers "which mandatory stages have no completion record in
+this workspace?" for a human debugging a task, and start/complete exist for
+manual hand-driven runs. It enforces nothing; treating it as an enforcement
+layer is the exact Rule-12 disease (a gate that gates nothing).
 
-This replaces the advisory-only stage_history in state.json with a
-purpose-built enforcement mechanism.
+The stage lists below are DERIVED from the orchestrator's Stage table — the
+single source of truth — so they can no longer drift (before this fix the
+hand-maintained copy was missing chart-render / chart-rerender /
+stat-grid-check, all mandatory since v3.13/v3.39).
 
 Usage:
-    # Register stage start:
-    python -m scripts.pipeline.pipeline_checklist --workspace {task_id} --stage {name} --action start
-
-    # Register stage completion:
-    python -m scripts.pipeline.pipeline_checklist --workspace {task_id} --stage {name} --action complete
-
-    # Check if all mandatory stages completed:
+    # Which mandatory stages have no completion record?
     python -m scripts.pipeline.pipeline_checklist --workspace {task_id} --action audit [--json]
+
+    # Manual hand-driven-run bookkeeping (rare):
+    python -m scripts.pipeline.pipeline_checklist --workspace {task_id} --stage {name} --action start|complete
 
 Exit codes (for --action audit):
     0 = all mandatory stages completed
@@ -32,47 +40,14 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
 
-MANDATORY_STAGES = [
-    "research",
-    "format-selector",
-    "outline-architect",
-    "image-prompt-designer",
-    "image-pipeline-fork",
-    "section-drafter",
-    "section-completeness-check",
-    "assembly",
-    "fact-check-and-citation",
-    "citation-inject",
-    "finalize-references-signature",
-    "humanizer",
-    "meta-builder",
-    "category-selector",
-    "schema-generator",
-    "cta-injection",
-    "visual-density-check",
-    "render-lint",
-    "image-placeholder-check",
-    "keyword-density-check",
-    "paa-alignment-check",
-    "locale-spelling-check",
-    "brand-fact-check",
-    "quality-gates",
-    "independent-reviewer",
-    "image-pipeline-join",
-    "image-visual-qa",
-    "pre-publish-gate",
-    "wordpress-publisher",
-    "verify-post",
-]
+# Derived, not hand-maintained (2026-08-17): the orchestrator's Stage table is
+# the single source of truth for what is mandatory. The old literal list here
+# drifted (missing chart-render/chart-rerender/stat-grid-check) — harmless only
+# because nothing consumed it, which is its own finding (see banner).
+from scripts.pipeline.orchestrator import STAGES as _STAGES  # noqa: E402
 
-RECOMMENDED_STAGES = [
-    "serp-analysis",
-    "competitor-analysis",
-    "citation-capsule-builder",
-    "internal-linker",
-    "geo-content-optimizer",
-    "visual-designer",
-]
+MANDATORY_STAGES = [s.name for s in _STAGES if s.is_mandatory]
+RECOMMENDED_STAGES = [s.name for s in _STAGES if not s.is_mandatory]
 
 
 def _checklist_path(task_id: str) -> Path:

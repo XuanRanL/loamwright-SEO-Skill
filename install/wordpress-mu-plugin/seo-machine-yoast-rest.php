@@ -3,7 +3,7 @@
  * Plugin Name: SEO Machine Yoast REST Bridge
  * Description: Exposes Yoast SEO fields via WordPress REST API for headless / automated workflows.
  *              Drop this file into wp-content/mu-plugins/ — auto-loads, no activation needed.
- * Version:     3.42.10
+ * Version:     3.42.16
  * Author:      Xuanran SEO
  * License:     Apache-2.0
  *

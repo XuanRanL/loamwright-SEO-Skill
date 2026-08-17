@@ -1,5 +1,377 @@
 # Changelog
 
+## [3.42.16] - 2026-08-17 (the duplicated-CTA incident, the reviewer target with four spellings, and the flip that had no executor)
+
+Everything here came out of one real 3-article batch (all 46 stages ran, all gates green,
+all three posts verified 24/24) plus a three-agent deep audit of the run, the last five
+releases, and the wiring. The batch's one live defect and the audit's structural findings
+are each root-cured with a regression test driven RED on the unfixed code where feasible.
+
+### Fixed
+
+- **A live draft shipped with the same CTA twice, and every gate stayed green.** Chain: a
+  reviewer would-change proposed renaming the injected CTA H3 (it only knew example
+  headings, not the registered `cta-draft.json` heading); an operator executed the rename
+  mid-repair; the driver's re-run then found no cta-classified heading (the injector's
+  idempotency is classification-based — the v3.38.0 skin-miss cure could not see a heading
+  that classifies as NOTHING) and injected a second identical paragraph + `[products]`
+  shortcode; check 29 and visual-density count only tagged/classified blocks, so the
+  duplicate was invisible to both. Three-layer cure, each direction tested
+  (`tests/test_cta_duplicate_content_guard.py`, the injector test watched RED via stash):
+  (1) `cta_injector` gains a CONTENT-IDENTITY idempotency layer — a renamed copy blocks
+  injection and fails the stage with the sanctioned repair path, in inject AND `--check`
+  modes; (2) `verify_post` check 30 detects duplicated CTA copy on the rendered page;
+  (3) `pre_publish_gate.check_gate_freshness` now FAILS (was WARN) when draft.md is newer
+  than review.json — the reviewer is the last content stage, so a draft newer than its
+  review is by definition unreviewed; fact-check/humanizer/quality staleness stays WARN
+  (later optimize stages legitimately edit after them). The shipped duplicate itself was
+  repaired, re-published, re-verified (25 checks incl. the new 30), and freshly re-reviewed.
+- **The reviewer score target had four spellings and the wrong one was load-bearing.**
+  `schemas/state.schema.json` annotated `default: 95` (nothing applies schema defaults at
+  runtime — a pure lie), both gates carried their own `or 80` literal, SKILL.md said 80,
+  and a batch bootstrap trusted the schema: six reviewer/repair rounds burned against a bar
+  no code enforces, on content every round called clean. Now `scripts/_core/review_target.py`
+  owns `DEFAULT_REVIEW_TARGET = 80`; both gates import it; the schema annotation is
+  corrected and PINNED to the constant by `tests/test_review_target_single_source.py`
+  (watched RED against the drift), with seam tests driving `next_stage()` on an
+  absent-field brief. batch-article SKILL.md now says: omit the field unless the operator
+  explicitly wants a stricter bar, and correct a mis-set target via `update_state` + a
+  batch-queue note — never silently, never via review.json.
+- **The draft→publish flip had three duplicated checklists and zero executors.** The
+  PATCH → live re-verify → indexing re-run procedure lived as prose in phase-publish,
+  weekly-digest, and seo-blog SKILL.md, and nothing could verify the post-flip indexing
+  re-run ever happened (the wired v3.42.12 notifier correctly records `skipped_draft`
+  in-pipeline, so on a draft-first project the SUBMITTING run only exists post-flip).
+  `scripts/wordpress/flip_post_live.py` now owns the sequence with a pinned exit-code
+  contract (0 flipped+verified+submitted / 2 flipped+verified but NOT submitted / 1 not
+  done), writes `flip-result.json` + `verify-live-result.json` (draft-phase
+  `verify-result.json` is pipeline history, deliberately preserved), and the three
+  checklists now invoke it (`tests/test_flip_post_live.py`).
+- **`pipeline_checklist.py` claimed to be an enforcement layer; it enforces nothing.** No
+  production path ever imported it or ran its CLI (live enforcement is
+  `_PASS_FLAG_REQUIRED` + `_GATE_STAGES` + `_content_gate_reason`), and its hand-maintained
+  `MANDATORY_STAGES` had drifted (missing chart-render / chart-rerender / stat-grid-check).
+  Its stage lists are now DERIVED from the orchestrator's Stage table and its docstring
+  states honestly what it is: a standalone diagnostic audit CLI.
+- **Reviewer CTA guard now names the source of truth, not examples.** Both layers
+  (dispatch_prompt + `agents/reviewer.md`, Rule 11) instruct reading
+  `cta-draft.json :: blocks[*].heading` for THIS draft's machine-owned headings — the
+  example-list guard is what let "One more thing" get a rename proposal.
+- **`AGENTS.md` routed `/rewrite` to a nonexistent skill** (`optimize/content-refresher` —
+  the real one is `cross-cutting/rewrite`) **and advertised three phantom features**
+  (`/context`, `/alerts`, `/skillify` → subskill dirs that never existed). Repointed / removed.
+- **fact-checker agent file lacked the dispatch_prompt's References/signature guard**
+  (Rule 11 point 2): out-of-band invocations could hand-build a draft References block that
+  `finalize-references-signature` exists to own. The counter-rule now lives in the agent file.
+- **`check_mu_plugin_drift`'s `requires=None` branch is now red-watched**
+  (`test_always_applicable_bridge_absence_is_not_deployed_never_not_applicable`): an
+  always-applicable bridge (page-schema) whose file is missing must surface as
+  `not_deployed` drift, never `not_applicable` — the pre-`requires` bug filed exactly that
+  as "in sync" (project-juliet, day one of page-schema).
+- **`provenance.exit_code()`'s severity ladder is pinned** (`tests/test_provenance_exit_codes.py`)
+  — it had one live run and zero tests.
+- Cosmetics with teeth: parked editor-in-chief's phantom cost row removed from
+  `cost_estimator` (inflated every estimate); verify-post stage description no longer
+  hardcodes a check count (went stale twice); `file_bus` docstring stops implying
+  `.history/` snapshots happen automatically (nothing calls `snapshot_history()` — the
+  dual-repair forensics had no trail for exactly that reason).
+
+### Added
+
+- **`install/wordpress-mu-plugin/xuanran-page-schema.php` (v1.0.2)** — page-level schema
+  correction on the free RankMath tier via the `rank_math/json_ld` filter: drops the
+  Article/#richSnippet node on pages, refines WebPage → AboutPage/ContactPage/etc. from a
+  filterable slug map, exposes `/xuanran/v1/page-schema` health endpoint so
+  `check_mu_plugin_drift` can see the deployed version (Rule 13 by design). Deployed
+  fleet-wide 08-15 (12 of 13 hosts; project-juliet has no file-write channel and now
+  honestly reports `not_deployed`). The drift checker's `BRIDGES` gained the fourth
+  `requires` element this plugin needed.
+
+### Process notes (from the batch + audit, recorded for the next operator)
+
+- One batch, one operator per task: the duplicated CTA was minted by a parent session and a
+  resumed background driver repairing the same workspace concurrently — codified in
+  batch-article SKILL.md ("One operator per task").
+- The IndexNow key remains unminted: every `indexing-notifier` run fleet-wide records
+  `no_credentials`. The wiring is honest; the feature submits nothing until the key is
+  minted and hosted per site. Operator action, tracked as the one open infra item.
+
+## [3.42.15] - 2026-08-12 (two more checks that could not fail, found by running a real batch through them)
+
+Both were found producing a 3-article project-alpha batch, not by reading code and not against
+fixtures. Both are the 3.42.14 disease one layer over: a rule whose enforcement lived in one
+place while a second place kept the old shape (Rule 11). Each fix has a regression test
+watched RED on the unfixed code, and the second fix's own guard test caught the first attempt
+at it over-matching.
+
+### Fixed
+
+- **The batch per-article cost guard could not run for 17 of 27 formats.** The batch-article
+  workflow documents `cost_estimator --format {fmt}` as its pre-flight cap check, but the
+  CLI's `choices=` was `FORMAT_PARAMS.keys()` — a hand-maintained COST-MODEL table, not the
+  format list — so a real format (`problem-solution`, `buyers-guide`, `multi-intent-hybrid`,
+  ...) exited 2 with `invalid choice`. This is the v3.41.4 batch_queue bug in a second file,
+  and it survived because that fix read the schema in ONE place only. Both readers now share
+  `scripts/_core/format_registry.py`. `estimate_article` still falls back to the default cost
+  profile for an uncalibrated format, but now says so on stderr instead of presenting a
+  default-derived number as calibration.
+- **`markdown_structure_check` could not find a conclusion written the way this plugin
+  mandates.** Every project CLAUDE.md instructs writers to open the conclusion with
+  `Conclusion:`, `The Bottom Line:` or `Final Verdict:`, and section coverage prefix-matched
+  the alias `bottom line` — so the leading article in "The Bottom Line: ..." made two of the
+  three mandated forms unmatchable, and the lint reported a missing conclusion on drafts that
+  had followed the rule exactly. Third instance of this matcher disease in this one file
+  (after the `{#anchor}` suffix bug and the exact-set-vs-prefix bug), and
+  `anchor_link_builder._TOC_EXCLUSION_WHITELIST` already whitelisted "the bottom line", so two
+  layers disagreed about the same fact. Matching now strips a leading article, but only for
+  multi-word aliases or an exact whole-heading match, so the generic single-word alias
+  `verdict` still cannot swallow "A Verdict Is Not a Diagnosis Yet". The first attempt DID
+  over-match on exactly that string and its own guard test failed it.
+
+Suite: 1925 passed, 1 skipped. Executors: test_quality_check 196 files OK,
+contract_fanout_check OK, hop3 registry 80 passed.
+
+## [3.42.14] - 2026-08-12 (the ten inert checks, cleared: every verifier can now fail for the reason it exists)
+
+Clears the full inert-check backlog from the 2026-08-12 release audit (items ranked by
+blast radius in that audit; three had already shipped in 3.42.11/12). Every behavioural
+fix carries a regression test watched RED on the unfixed code, and each new gate was
+driven in BOTH directions (a check hardwired to pass fails one scenario, hardwired to
+fail fails another).
+
+### Fixed
+
+- **`deploy_blog_sidebars --check` exited 0 on `not_deployed`** — the mu-plugin absent on
+  the host with transport verified, its own motivating scenario, plus `manual`,
+  `not_generated`, and ANY unanticipated status. Root cause: a BLOCKLIST of bad states,
+  so every state it did not enumerate read as success. Inverted to an allowlist
+  (`resolve_exit`): 0 only when every result is verified `in_sync`. The hop3 registry
+  gate now pins all formerly-green statuses plus an `unknown` probe.
+- **The CTA `resolution_failed` sentinel finally has readers.** A failing brief (project
+  SELLS things, catalog unreachable) let `next_stage()` report PIPELINE_COMPLETE, masking
+  the failure as "nothing to do". Now a content-gate failure in the shared
+  `_content_gate_reason` helper (both completion paths see it — the v3.35.3 lesson) and a
+  `run_pipeline._GATE_STAGES` entry (GATE_FAILED, route-to-repair). `skipped_no_config`
+  still auto-skips for the 5 no-CTA projects. The old regression test imported the
+  orchestrator and never used it; replaced with 5 real seam tests including the happy path.
+- **`tavily_pool` unreadable payloads no longer read as exhaustion.** `int(raw or 0)`
+  turned `''`/`[]`/`False` into balance 0 → persistent "exhausted" marking (the exact
+  v3.42.5 bug class surviving its own fix). New `_coerce_credit()`: bools and non-numeric
+  values are UNKNOWN (no balance write); numeric strings, including a real `"0"`, still
+  count. 20 tests either direction.
+- **Common Crawl trio**: a 404'd crawl-id no longer reports a stale `scanned_to_rank`
+  from a prior scan ("source unavailable" and "not in scanned ranks" are now distinct
+  verdicts — Rule 12/13); `main()` no longer crashes on its own success path printing
+  three deleted dataclass fields; `agents/audit-backlinks.md` now documents the REAL
+  CLIs (its previous `--domain`/`--urls` flags never existed, so both "revived" tier-0
+  backlink sources were dead in production — the sole caller could not invoke them).
+- **`render_probe --check` can now fail.** "No headed samples" was reported as "headless
+  agrees with headed"; unmeasured is now a distinct tri-state (`None`), `--check` refuses
+  to certify unmeasured selectors, and the module went from zero tests to a
+  three-direction gate.
+- **`restyle_posts` leak signal is visible and covers the right family.** The detector
+  matched only `xr-*` classes while the motivating incident was the
+  `{slug}-pillar`/`article-signature` family (`style_tokens.LEGACY_SPECIAL`); the count
+  was invisible in default output and an absent key read as clean. Now: full family +
+  wrapper detection, `wrapper_check` tri-state (`checked` / `not_tokenized` /
+  `skipped_no_slug` — unknown never folds into 0), printed in default output, `--check`
+  exits non-zero on leaks.
+- **`check_post_drift._norm_sig` is pinned.** Reverting it to `t.lower()` previously left
+  all 27 tests green; now 5 new/rewritten tests (including the `audit .` artifact INSIDE
+  the compared clause, and a permanent revert-trap) go red on exactly that revert.
+- **C10 and `paa_alignment_check` count the same questions.** paa filtered non-questions;
+  C10 did not (measured 6 vs 3 on one FAQ — bold lead-ins counted as questions), and the
+  guard test re-typed paa's expression instead of calling it. One shared
+  `scripts/_core/faq_questions.py :: extract_faq_questions()`, both callers delegate, the
+  guard drives both production entry points on 4 fixture shapes, and both counters return
+  5 on the real 2026-08-12 digest draft.
+- **`heading_anchor` is now actually the one source.** 10 private copies of the anchor
+  regex (4 on a divergent variant) replaced with compositions of exported fragments; a
+  registry test greps `scripts/**` and fails on any new private copy outside the
+  allowlist, with a stale-entry trap. One copy remains in `markdown_structure_check.py`
+  (held by a concurrent session; its allowlist entry self-expires on consolidation).
+- **Ghost executors exorcised.** 12 audit agent files invoked 8 modules that do not exist
+  (or exist under other names/flags): each now documents either the REAL module + REAL
+  argparse (verified by parsing) or the honest absence of an executor with the manual
+  procedure. `hooks/post_tool_use_progress.py` deleted — never registered in hooks.json,
+  its trigger cannot fire under the v3.7+ runner, its role is served by `/status`. New
+  `tests/test_audit_doc_invocations.py` walks the audit instruction layer and fails on
+  any future ghost module, ghost flag, or unregistered hook.
+
+Suite: 1925 passed, 1 skipped. Executors: test_quality_check 196 files OK,
+contract_fanout_check OK, hop3 registry 84 passed.
+
+## [3.42.13] - 2026-08-12 (self-audit of 3.42.11/12: the follow-up close was a silent no-op — the fix's own test used the imagined shape)
+
+Adversarial re-audit of this session's own two releases, applying the same standard they
+were shipped under. One real defect found, one Rule 11 fan-out miss, both cured.
+
+### Fixed
+
+- **`close_published_followups` never closed anything in production.** It read
+  `fu["head"]["url"]` — the CLUSTER shape — while `_emit_followups` emits digest-item shape
+  (`canonical_source.url`, no `head` key at all). `closed` was always empty, the function
+  returned rows unchanged, and the v3.42.11 "published follow-ups can no longer recycle"
+  guarantee was a silent no-op. Its test passed because the fixture hand-built the imagined
+  shape — the exact "fixtures prove shape, production proves contract" failure, in a commit
+  that quoted that rule. `dedup_followups`, five lines above, had been reading the correct
+  key all along. Proven live: 0 rows changed before, 3 after, on the real loamwright
+  ledger. The `_followup` test fixture now DRIVES `_emit_followups` itself (a future shape
+  change breaks the tests instead of no-opping), and a new lifecycle seam test covers
+  emit → budget → close → next-week-emit end-to-end. No ledger repair needed: the 08-12
+  issue published zero follow-ups (hand-curated all-fresh), so its `developing` rows are
+  legitimately still eligible.
+- **Rule 11 fan-out miss from v3.42.11:** `subskills/research/industry-news-monitor/
+  SKILL.md` still taught `project_terms = content_strategy.primary_clusters` — the exact
+  retired contract. Now documents `_digest_relevance_terms` (relevance_terms-first), the
+  follow-up cap, and the close.
+
+### Verified (no change needed)
+
+- Cost attribution works at the live seam: production rows written after the v3.42.11 fix
+  carry `project_slug` (a concurrent project-alpha pipeline's calls attribute correctly via the
+  env-pin), and `fleet_view._site_cost_30d("project-alpha")` reads non-zero for the first time.
+  Historical rows stay unattributed (most lack a mappable task_id; partial backfill is a
+  separate data-migration decision).
+- `_drop_excluded` receives the FULL catalog category list (parents included), so the
+  ancestor walk has its tree; `digest_artifacts.main()` loads and passes `bc`;
+  `max_followups_per_issue` reads from the `weekly_digest` block; skill/project separation
+  holds (zero slug-conditionals in any file this session touched);
+  `business-context.schema.json` is permissive, so the new project keys cannot be rejected
+  (the `weekly_digest` block having no schema at all is a pre-existing known gap).
+
+## [3.42.12] - 2026-08-12 (indexing-notifier wired after months as doc-only; digest pre-write made visible; the verifiers that could not fail, fixed)
+
+Second half of the 2026-08-12 audit (first half shipped as 3.42.11). Theme: Rule 6/14 —
+executors that existed only as documentation, and checks that could not fail for the
+reason they exist. Every behavioural fix carries a regression test watched RED first.
+
+### Added
+
+- **`indexing-notifier` is now a real pipeline stage** (`scripts/publish/indexing_notify.py`,
+  runs after `verify-post`). The subskill claimed "triggered as final step of phase-publish"
+  for months while the STAGES table ended at `verify-post`; the only caller of the
+  fully-implemented `indexnow_submit.py` was the dead `agents/publisher.md`, so no article
+  this pipeline published was ever submitted to IndexNow. Contract: NOTIFIER, not gate —
+  drafts record `skipped_draft` (Rule 5a; the post-flip re-run in the publish-confirmation
+  flows is the one that submits), and submit/transport failures record distinct honest
+  outcomes (`no_credentials` / `transport_error` / `submit_failed` — Rule 13) without
+  blocking a pipeline whose article already verified. GSC URL-inspection stays a documented
+  manual step (per-site OAuth, strict quotas, 13-site fleet). The first live run caught its
+  own classifier matching an imagined error message instead of the real one; fixed and
+  pinned to the message credential_hub actually produces. NOTE: no IndexNow key is
+  configured yet — every run records `no_credentials` until one is minted and hosted.
+- **`scripts/_core/provenance.py --check`**: workspace provenance scan with distinct exit
+  codes (clean / unknown / script-prewritten / unstamped). The weekly-digest pre-writer's
+  artifacts auto-satisfied `outline-architect` and `image-prompt-designer` in 3 ms without
+  either agent running — invisible until now.
+
+### Fixed
+
+- **The digest `## Abstract` stub**: `digest_artifacts.compose_abstract()` composes a real
+  60-90-word paragraph from the items' extract-verified summaries (ranked order, sentence-
+  splitter tolerant of abbreviations, L12-safe). Previously `abstract_seed` was the raw
+  `theme_of_week` headline, shipped verbatim by assemble — the published 2026-08-12 Abstract
+  was six words, flagged by the reviewer as its #1 defect.
+- **The digest cover's missing negative prompt** (root cause of a third-party logo rendering
+  into the cover 3 consecutive weeks, ~$1.67 regen each): `build_image_prompts` now accepts
+  the project config and layers `brand-guideline.yaml :: negative_prompt_baseline` verbatim
+  + a format-level third-party-marks ban (incl. reflections/shadows) + the platforms this
+  issue actually names, derived from `items[].entities` — no hardcoded list to go stale.
+  Verified live: `openai_image_pipeline._adapt_entry` appends it as `AVOID:`.
+- **Agent tool-isolation test regexed raw text instead of parsing YAML**: an agent whose
+  frontmatter failed `yaml.safe_load` ran with ALL TOOLS while the test stayed green —
+  `agents/visual-designer.md` (which edits draft.md in place) was live in exactly that
+  state, and `agents/humanizer.md` carried the same defect. Both frontmatters fixed (quoted
+  description scalar); the test now parses like the runtime and is proven able to fail.
+- **`contract_fanout_check` scope**: now scans `projects/**/*.md` + recursive
+  `references/**` (advisory bucket; `--include-projects` gates on it) with a usage-anchored
+  `{slug}-pillar` pattern — 25 true positives it was blind to, 0 false positives. The one
+  shipped-layer hit (`references/style/markdown-authoring-conventions.md` still teaching the
+  pre-token wrapper class) is cured in this release.
+- **hop3 registry gate was a grep** (`'"--check"' in src` passes on a no-op flag): it now
+  drives all 8 executors' real `main()` with synthetic in-sync/drifted/unreadable reports
+  and asserts exit codes in both directions; sabotage runs prove the old gate passed a
+  no-op check the new one catches. The permanently-skipped "unguarded surfaces state why"
+  test is now live.
+- Canonical-stage fixture updated for the new stage; the stale `verify_backlinks`-era
+  claim "CI: GitHub Actions on every commit" in CLAUDE.md corrected — there is no `.github/`
+  directory; the real enforcement is the documented hand-run suite + Rule-14 executors.
+
+### Changed
+
+- **Dead agents tombstoned, not wired** (operator decision): `editor-in-chief` and
+  `seo-auditor` PARKED — `reviewer` + the deterministic gates absorbed their roles, and a
+  5th overlapping LLM gate adds cost without a distinct catch-rate; `publisher`,
+  `image-curator`, `schema-validator` marked SUPERSEDED with what absorbed them and which
+  gaps remain real (`alt_text_polisher` and `image_metadata.json` have no callers; the
+  `/validate-schema` command never existed). Two false "used by" claims in the reference
+  layer corrected. Leftover: the stale `editor-in-chief` cost row in `cost_estimator.py`
+  (file held by a concurrent session; remove on next touch).
+
+## [3.42.11] - 2026-08-12 (digest ranker fed the wrong vocabulary; CTA exclusion now inherits; cost attribution restored)
+
+Post-publish audit of the 2026-08-12 loamwright weekly digest. The issue itself shipped
+clean (reviewer 90/100, CORE-EEAT 81.25 — a series best, 24/24 live verification), but the
+audit found four defects behind it, three of which had been silently degrading every prior
+issue. Every fix below carries a regression test that was watched RED on the pre-fix code
+(`tests/test_audit_fixes_2026_08_12.py` — Rule 14); 16 of the 21 failed before the fixes.
+
+### Fixed
+
+- **Digest relevance was scored against service-line labels, not news vocabulary.**
+  `industry_news_runner` fed `content_strategy.primary_clusters` — what an agency *sells*
+  ("Technical SEO", "Local SEO") — into the news-relevance scorer. On the seven
+  hand-curated items of the 2026-08-12 issue, **6 of 7 scored 0.0**, the "definitely
+  off-topic, worse than unknown" verdict, making the 0.20 relevance weight
+  *anti-correlated* rather than merely dead and leaving recency the only live signal.
+  That is the root cause of five consecutive issues needing full hand-curation.
+  The scorer's arithmetic is unchanged and still correct — a lone common word must not
+  match a two-word term. New `_digest_relevance_terms()` prefers
+  `weekly_digest.relevance_terms` and falls back to `primary_clusters`. With loamwright's
+  new 35-term news vocabulary the same items score 1.000 (6 of 7) while an off-topic
+  bakery story still scores 0.0.
+
+- **Continuing stories had first claim on the whole issue budget.** `resolve_issue_budget`
+  capped follow-ups only at `items_per_issue`, and they were never ranked against a fresh
+  item (`_emit_followups` hardcodes an empty summary and 0.5 significance). Three stale
+  entries took 3 of 7 slots on 2026-08-12. Now capped by
+  `weekly_digest.max_followups_per_issue` (default 2), with at least one fresh slot always
+  reserved — which also closes the `keep == 0` hole that let a follow-up own
+  `theme_of_week` despite both SKILL layers promising it cannot.
+
+- **A published follow-up was never closed.** `build_covered_update` records only fresh
+  clusters, so a story published *as* a continuing story kept `status: "developing"` and
+  was re-emitted every week until it aged out. The same three entries ran on 08-06 and
+  08-12 and would have run again on 08-19. New `close_published_followups()` flips them to
+  `reported`; genuinely new developments re-enter via `resolve_recurrences` on a fresh URL.
+
+- **CTA category exclusion did not inherit down the category tree (compliance).**
+  `_drop_excluded` matched a category's own slug/name only, so excluding a parent excluded
+  nothing and Rx children had to be enumerated by hand. That enumeration went stale:
+  `spot-on-systemic` (a child of Prescription, holding a prescription-only product) was
+  excluded in `blog_sidebars.excluded_product_categories` but not in
+  `conversion_offers.excluded_categories`, leaving it CTA-merchandisable from editorial
+  content — the site's own audit CRIT-1 defect. Exclusion now walks ancestors, so a future
+  Rx child is blocked the day it is added, with no config edit.
+
+- **`/fleet` reported $0.00 spend for every site.** `cost_ledger.log()` has always accepted
+  `project_slug`, and all eight production call sites omitted it, so 7,108 of 7,112 ledger
+  rows carried `project_slug: null` while `fleet_view._site_cost_30d` filters on exactly
+  that field. Three months and $873.99 of real logged spend were attributed to nothing, and
+  the "High spend (>$100)" health alert could never fire. `log()` now defaults the field to
+  the active project (env-first, Rule 7), so parallel sessions attribute to their own
+  project. The only prior test set it in a fixture — proving the plumbing while production
+  never populated it (Rule 10: the helper was tested, the seam was not).
+
+### Changed
+
+- `projects/loamwright/business-context.json`: added `weekly_digest.relevance_terms` (35
+  news-topic phrases) and `max_followups_per_issue: 2`.
+- `skills/weekly-digest/SKILL.md`: Step 4b now documents the term-source contract and the
+  follow-up cap. Hand-curation remains mandatory — these fixes improve the ranking inputs,
+  they do not replace editorial judgment.
+
 ## [3.42.10] - 2026-08-10 (backlink data sources revived: inverted SSRF guard, retired Common Crawl path, single-frame render verdicts)
 
 The 2026-08-06 website audit surfaced that BOTH free tier-0 backlink data sources had

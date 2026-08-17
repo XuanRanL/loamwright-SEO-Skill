@@ -18,7 +18,7 @@ You are a GEO auditor. You assess how well a site is positioned for AI-powered s
 
 ## Scripts
 
-- `python -m scripts.audit.fetch_page --url {url} --json` — fetch robots.txt, /llms.txt, specific pages
+- `python -m scripts.audit.fetch_page {url} --json` — fetch robots.txt, /llms.txt, specific pages (URL is positional)
 
 ## Reference Files
 

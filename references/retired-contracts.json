@@ -9,8 +9,9 @@
       "retired_contract": "Published article HTML carries the literal class '{slug}-pillar' (and the legacy component names), so publish-time verification can grep the live page for it.",
       "current_contract": "For any project with brand/style-tokens.json (all 13 today), wp_publisher._apply_project_styling rewrites body + CSS at the publish boundary into per-project HMAC tokens: project-charlie-pillar ships as mwxiod-1ymm61. Internal artifacts (draft.md, lints) keep the legacy names. Published names must be RESOLVED, never hand-written.",
       "cure": "Resolve the published name with `python -m scripts._core.style_tokens --show {slug}`, or let verify_post.py do it. Verifying live HTML for a literal '{slug}-pillar' on a tokenized project is a check that can never pass.",
-      "pattern": "\\{slug\\}-pillar|project-charlie-pillar",
-      "requires": "style_tokens|style-tokens"
+      "pattern": "class\\s*=\\s*[\"'\\\\]*[a-z0-9_-]*-pillar|\\.[a-z][a-z0-9_]*-pillar\\b|\\{slug\\}-pillar",
+      "requires": "style_tokens|style-tokens",
+      "note_on_pattern": "Generalized 2026-08-12. It used to be the two literal spellings '{slug}-pillar|project-charlie-pillar', so twelve of thirteen real project wrappers (project-echo-pillar, project-foxtrot-pillar, project-alpha-pillar, ...) did not match and the one rule this executor was built for could not fire. The generalization is anchored on CSS-class USAGE (class=\"x-pillar\", .x-pillar) rather than 'any hyphenated word ending in -pillar', because 'local-state-pillar' is a FORMAT ID and 'has-pillar' / 'no-pillar' / 'spoke-pillar' / 'design-system-pillars' / 'system-pillar' are ordinary prose in this tree. A naive widening flags all of them, and per _how_to_add a lint that fires on correct usage gets muted — worse than no lint. The slug sub-pattern is [a-z][a-z0-9_]* (no hyphen) after a leading dot, which is precise for all 13 single-token project slugs; a hyphenated slug would need it revisited. tests/test_contract_fanout_scope_and_pattern.py pins both the matches and the non-matches against this exact regex."
     },
     {
       "id": "rankmath-updatemeta-route",
@@ -20,8 +21,9 @@
       "current_contract": "SEO meta goes through POST /wp/v2/posts/{id} with a `meta` body; the MU-plugin registers the rank_math_* keys with a REST schema. The old bridge route 404s on POST, and updateMeta corrupts rank_math_schema_jsonld so the front-end 500s on render.",
       "cure": "Use POST /wp/v2/posts/{id} with {\"meta\": {\"rank_math_*\": ...}}. Append custom schema to the post body as inline JSON-LD instead of sending it through updateMeta.",
       "pattern": "rankmath/v1/updateMeta|POST[^\n]{0,40}xuanran/v1/rank-math-bridge",
-      "requires": "wp/v2/posts",
-      "note_on_scope": "Only POST was retired. GET /xuanran/v1/rank-math-bridge survives and is the canonical bridge_version probe, so the pattern must not match a bare mention of the route."
+      "requires": "wp/v2/(posts|\\{type\\}|\\{post_type\\})",
+      "note_on_scope": "Only POST was retired. GET /xuanran/v1/rank-math-bridge survives and is the canonical bridge_version probe, so the pattern must not match a bare mention of the route.",
+      "note_on_requires": "Broadened 2026-08-12, when the widened scope first reached projects/**. projects/project-alpha/CLAUDE.md states the CURRENT contract correctly — `POST /wp/v2/{type}/{id}` with a meta body, naming updateMeta only to forbid it — but the requires regex demanded the literal 'wp/v2/posts' and flagged it. The endpoint is generic across post types, so the acknowledgement is written generically too; a requires regex that only accepts one spelling of the new contract fires on files that already comply, which is how a lint earns being muted."
     },
     {
       "id": "cta-placement-end-v3415",

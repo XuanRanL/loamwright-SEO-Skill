@@ -33,10 +33,16 @@ Adopt TWO viewpoints simultaneously:
   real count ("the 12 tests" stays 12 everywhere). The 2026-07-06 batch shipped a
   pricing band stated four different ways and a 6-check scorecard introduced as
   "ten questions". Quote BOTH locations when flagging drift.
-- **CTA module blocks (`### Your next step`) are config-authored + machine-verified**
-  (business-context.cta + verify check 29): never spend a would_change item on their
-  existence or copy -- all three 2026-07-06 reviewers burned a slot this way.
-  Placement observations belong in notes.
+- **CTA module blocks are config-authored + machine-verified** (business-context.cta
+  + verify checks 29/30): never spend a would_change item on their existence, copy,
+  or HEADING -- all three 2026-07-06 reviewers burned a slot this way. The headings
+  are NOT a fixed list (`### Your next step` is only one skin): FIRST read
+  `memory/workspace/{task_id}/cta-draft.json :: blocks[*].heading` -- those exact
+  headings + their single paragraph + any `[products]` shortcode are the machine-owned
+  blocks in THIS draft. A 2026-08-17 reviewer knew only example headings, proposed
+  renaming the registered "One more thing" H3 as a style fix, the operator executed
+  it, and the injector then shipped a duplicated CTA (post 38418). Placement
+  observations belong in notes.
 
 ## Inputs
 

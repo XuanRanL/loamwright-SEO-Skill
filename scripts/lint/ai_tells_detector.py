@@ -49,6 +49,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Final
 
+from scripts._core.heading_anchor import ANCHOR_FRAGMENT
 from scripts.lint._text_utils import find_all_with_line
 
 
@@ -331,7 +332,8 @@ _COUNT_THRESHOLDS: Final[dict[str, int]] = {"P27": 3}
 # Captures (level_hashes, heading_text); extent logic uses the level so a child H3
 # block ends at the next H2/H3, while a parent H2 block (e.g. FAQ with ### question
 # subheadings) still runs to the next H2 — child headings do NOT truncate it.
-_HEADING_LINE: Final[re.Pattern[str]] = re.compile(r"^(#{2,4})\s+(.*?)\s*(?:\{#[^}]*\})?\s*$")
+_HEADING_LINE: Final[re.Pattern[str]] = re.compile(
+    r"^(#{2,4})\s+(.*?)\s*(?:" + ANCHOR_FRAGMENT + r")?\s*$")
 _H2_LINE: Final[re.Pattern[str]] = _HEADING_LINE  # back-compat alias
 
 # ─── Bold-led list item exemption (2026-07-05) ──────────────────────

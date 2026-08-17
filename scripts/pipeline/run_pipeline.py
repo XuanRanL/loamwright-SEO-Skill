@@ -75,6 +75,16 @@ _GATE_STAGES = {
     # not a generic verify ERROR. Rule 11: change both layers together.
     "stat-grid-check": "stat-grid-lint.json",
     "local-uniqueness-check": "local-uniqueness-lint.json",
+    # CTA brief resolution (2026-08-12 audit): the v3.42.4 resolution_failed
+    # sentinel exits 1, but this driver swallowed any non-gate stage's exit code
+    # — the pipeline reported COMPLETE with "exit": 1 buried in steps.
+    # cta-brief.json carries no `passed` flag (see the cta-brief.json note in
+    # orchestrator._PASS_FLAG_REQUIRED), so this entry's work is done by the
+    # returncode branch below plus the cta-brief-builder content gate in
+    # orchestrator._content_gate_reason — Rule 11: the two layers state the same
+    # contract and must be changed together. The legitimate skipped_no_config
+    # sentinel exits 0 and stays a quiet pass.
+    "cta-brief-builder": "cta-brief.json",
     "cta-injection": "cta-injection-result.json",
     # CTA Gate 5 (v3.37): mirrors orchestrator._PASS_FLAG_REQUIRED so a repetitive
     # CTA draft surfaces as GATE_FAILED (route to re-dispatch cta-writer), not a

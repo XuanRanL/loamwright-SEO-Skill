@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Common Crawl host-level web graph parser.
 
-Fetches domain-level link metrics from the CC host-level web graph:
-harmonic centrality, in-degree (inbound link count), out-degree, and a
-PageRank estimate derived from the harmonic centrality percentile.
+Fetches domain-level link metrics from the CC quarterly domain-ranks table:
+harmonic centrality (value + rank), PageRank (value + rank), and n_hosts.
+The table has no in/out-degree columns; the v3.42.10 rewrite deleted those
+fields rather than fabricate them.
 
 Completely FREE -- no API key required.
 
@@ -25,9 +26,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import io
 import json
-import os
 import sys
 import time
 import zlib
@@ -241,8 +240,8 @@ def _search_domain_in_stream(
 ) -> Optional[dict[str, Any]]:
     """Stream the vertices file and search for a specific domain.
 
-    Returns a dict with ``harmonic_centrality``, ``in_degree``, ``out_degree``
-    if found, or ``None``.
+    Returns a ``_parse_ranks_row`` dict (harmonic centrality + PageRank values
+    and ranks, ``n_hosts``) if found, or ``None``.
 
     The CC vertices file is sorted alphabetically by domain, so we can
     bail early once we pass the target domain lexicographically.
@@ -358,6 +357,15 @@ def _search_domain_via_ranked_download(
             headers={"Range": f"bytes=0-{max_download_bytes}"},
         ) as response:
             if response.status_code not in (200, 206):
+                # The ranks file itself is unreachable (404 = retired/moved
+                # upstream). Record THIS attempt's depth — zero — instead of
+                # leaving a previous scan's depth in the module global, which
+                # would let the not-found report quote a stale scanned_to_rank
+                # and advise scanning deeper into a file that cannot be fetched
+                # at all. "Source unavailable" and "not in the portion scanned"
+                # are different verdicts (Rule 12); the HTTPError path below
+                # already records its depth the same way.
+                _LAST_SCAN_DEPTH[crawl_id] = deepest_rank
                 return None
 
             for chunk in response.iter_bytes(chunk_size=1 << 18):
@@ -563,12 +571,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Error: {metrics.error}", file=sys.stderr)
             return 1
 
+        # Print the fields the v3.42.10 dataclass actually carries. The old
+        # in_degree / out_degree / pagerank_estimate fields were deleted in that
+        # rewrite (the quarterly domain-ranks table has no degree columns), and
+        # printing them made every SUCCESSFUL lookup die with AttributeError.
         print(f"\n=== Common Crawl Host Graph: {metrics.domain} ===")
-        print(f"  Crawl:                {metrics.crawl_id}")
-        print(f"  Harmonic Centrality:  {metrics.harmonic_centrality:.6f}")
-        print(f"  In-degree (inbound):  {metrics.in_degree:,}")
-        print(f"  Out-degree (outbound):{metrics.out_degree:,}")
-        print(f"  PageRank estimate:    {metrics.pagerank_estimate:.1f}/100")
+        print(f"  Crawl:                     {metrics.crawl_id}")
+        print(f"  Harmonic centrality:       {metrics.harmonic_centrality:,.1f}")
+        print(f"  Harmonic centrality rank:  {metrics.harmonic_centrality_rank:,}")
+        print(f"  PageRank:                  {metrics.pagerank:.3e}")
+        print(f"  PageRank rank:             {metrics.pagerank_rank:,}")
+        print(f"  Hosts under domain:        {metrics.n_hosts:,}")
+        if metrics.scanned_to_rank:
+            print(f"  Scanned to rank:           {metrics.scanned_to_rank:,}")
         print(f"\n  Response time: {elapsed_ms}ms")
 
     return 0

@@ -95,10 +95,16 @@ class SelectorResult:
         return False
 
     @property
-    def headless_differs_from_headed(self) -> bool:
-        """The trap. True means a headless-only finding here would be wrong."""
+    def headless_differs_from_headed(self) -> Optional[bool]:
+        """The trap. True means a headless-only finding here would be wrong.
+
+        None when the headed pass produced no samples: NOT MEASURED, which is a
+        different state from "they agree". Returning False here (as this did
+        until 2026-08-12) let ``--check --no-headed`` exit 0 unconditionally —
+        a check that can never fail is not a check (Rule 12/14).
+        """
         if not self.headed_samples:
-            return False
+            return None
         return self.headless_settled != self.headed_settled
 
     @property
@@ -287,8 +293,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--check", action="store_true",
         help=(
-            "Exit 1 if headless disagrees with the real browser on any selector — "
-            "i.e. a headless-derived finding would be unsafe."
+            "Gate mode. Exit 1 if headless disagrees with the real browser on "
+            "any selector (a headless-derived finding would be unsafe); exit 3 "
+            "if the comparison could not be measured (no headed samples); "
+            "refused up front (exit 2) when combined with --no-headed, because "
+            "without the headed pass there is no ground truth to check against."
         ),
     )
     p.add_argument("--json", "-j", action="store_true")
@@ -305,6 +314,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     except ValueError:
         print("error: --viewport must look like 1440x900", file=sys.stderr)
         return 2
+    if args.check and args.no_headed:
+        # Refuse BEFORE probing: with no headed pass there is no ground truth,
+        # so "agrees" is unmeasurable — and unmeasured must never exit 0
+        # (Rule 12: a coverage gap is not a verdict).
+        print(
+            "error: --check needs the headed (real-browser) pass as ground "
+            "truth; with --no-headed the comparison is UNMEASURABLE, not "
+            "'agreed'. Drop --no-headed (or drop --check).",
+            file=sys.stderr,
+        )
+        return 2
 
     try:
         results = probe(
@@ -320,6 +340,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
 
     unsafe = [r for r in results if r.headless_differs_from_headed]
+    unmeasured = [r for r in results if r.headless_differs_from_headed is None]
 
     if args.json:
         print(json.dumps(
@@ -327,6 +348,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "url": args.url,
                 "results": [r.to_dict() for r in results],
                 "headless_unsafe_selectors": [r.selector for r in unsafe],
+                "unmeasured_selectors": [r.selector for r in unmeasured],
             },
             indent=2, ensure_ascii=False,
         ))
@@ -342,7 +364,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(f"  headless @{t:<5}: {v}")
             for t, v in r.headed_samples.items():
                 print(f"  headed   @{t:<5}: {v}")
-            if r.headless_differs_from_headed:
+            if r.headless_differs_from_headed is None:
+                print("  ? headed pass not sampled — headless findings stay "
+                      "UNVERIFIED (unmeasured is not agreement).")
+            elif r.headless_differs_from_headed:
                 print("  ⚠ headless disagrees with the real browser — do NOT report "
                       "a rendering defect from the headless pass.")
             if r.static_differs_from_rendered:
@@ -352,8 +377,20 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"\nUNSAFE: {len(unsafe)} selector(s) differ between headless and "
                   f"real browser: {[r.selector for r in unsafe]}")
 
-    if args.check and unsafe:
-        return 1
+    if args.check:
+        if unsafe:
+            return 1
+        if unmeasured:
+            # The headed pass ran but yielded no samples for these selectors:
+            # the comparison is UNMEASURABLE — a verdict distinct from both
+            # "agrees" (0) and "differs" (1), never folded into a pass.
+            print(
+                f"UNMEASURED: {len(unmeasured)} selector(s) have no headed "
+                f"samples — cannot verify agreement: "
+                f"{[r.selector for r in unmeasured]}",
+                file=sys.stderr,
+            )
+            return 3
     return 0
 
 

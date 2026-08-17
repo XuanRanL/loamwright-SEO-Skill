@@ -55,7 +55,9 @@ def _normalize_markdown(md: str) -> str:
     md, _ = strip_scaffold_markers(md)
     out: list[str] = []
     for ln in md.split("\n"):
-        m = re.match(r"^(#{2,6})\s+(.*?)\s*\{#([^}]+)\}[ \t]*(\S.*)$", ln)
+        m = re.match(
+            r"^(#{2,6})\s+(.*?)\s*" + heading_anchor.ANCHOR_CAPTURE_FRAGMENT
+            + r"[ \t]*(\S.*)$", ln)
         if m:
             hashes, htext, anchor, body = m.groups()
             keep_anchor = f" {{#{anchor}}}" if len(hashes) == 2 else ""  # TOC only links H2

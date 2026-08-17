@@ -38,7 +38,7 @@ from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from pathlib import Path
 
-from scripts._core import cost_ledger
+from scripts._core import cost_ledger, format_registry
 
 
 # ── Per-format cost model parameters (calibrated against /article runs) ──
@@ -58,6 +58,16 @@ FORMAT_PARAMS: dict[str, dict] = {
     "default":        {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": 4},
 }
 
+# FORMAT_PARAMS is a COST-MODEL table — it holds calibration rows only for the formats
+# whose real /article runs have been measured, and `estimate_article` falls back to
+# "default" for the rest. It is NOT the list of legal formats: that is the schema enum,
+# shared via format_registry. Using FORMAT_PARAMS.keys() as the CLI's `choices=` (the
+# pre-v3.42.11 bug) promoted a deliberate soft fallback into a hard `invalid choice`
+# rejection for 17 of 27 real formats, breaking the per-article cost guard that
+# subskills/cross-cutting/batch-article documents. See
+# tests/test_cost_estimator_format_enum_seam.py.
+VALID_FORMATS: set[str] = format_registry.load_valid_formats(source="cost_estimator") | {"default"}
+
 # Token consumption model (input/output per 100 words drafted)
 # Calibrated: drafting 100w needs ~500 prompt tokens (refs+context+brief) + ~140 output tokens
 TOKENS_PER_100W_DRAFT_INPUT  = 500
@@ -74,7 +84,9 @@ PIPELINE_STAGES: list[tuple[str, int, int]] = [
     ("humanizer",          15000, 3000),
     ("fact-checker",       18000, 2000),
     ("linker",             8000,  800),
-    ("editor-in-chief",    20000, 2500),
+    # editor-in-chief row removed 2026-08-17: agent PARKED v3.42.12 (tombstoned,
+    # never dispatched) — a cost row for a stage that never runs inflates every
+    # estimate by a phantom ~$0.09.
     ("reviewer",           18000, 1200),
     ("geo-optimizer",      6000,  500),
     ("meta-builder",       4000,  400),
@@ -107,7 +119,18 @@ def estimate_article(
     cache_hit_pct: float = 0.30,   # ~30% of prompt tokens cached on average
 ) -> CostBreakdown:
     """Compute estimated total cost for a planned /article run."""
-    params = FORMAT_PARAMS.get(fmt, FORMAT_PARAMS["default"])
+    params = FORMAT_PARAMS.get(fmt)
+    if params is None:
+        params = FORMAT_PARAMS["default"]
+        # Loud, not silent: a default-derived number must never read as
+        # format-specific calibration (Rule 14 — a derived value must be
+        # distinguishable from an unknown one).
+        print(
+            f"[cost_estimator] NOTE: '{fmt}' has no calibrated cost row; "
+            f"estimating with the uncalibrated default profile "
+            f"({FORMAT_PARAMS['default']['words']}w baseline).",
+            file=sys.stderr,
+        )
     w = words or params["words"]
     n_imgs = image_count if image_count is not None else params["image_count"]
 
@@ -234,7 +257,7 @@ def _to_jsonable(b: CostBreakdown) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Pre-flight cost estimator for /article")
     ap.add_argument("--format", default="listicle",
-                    choices=list(FORMAT_PARAMS.keys()))
+                    choices=sorted(VALID_FORMATS))
     ap.add_argument("--words", type=int)
     ap.add_argument("--images", type=int, default=4)
     ap.add_argument("--image-quality", default="high",

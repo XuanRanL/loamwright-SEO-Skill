@@ -403,6 +403,28 @@ def _relevance(cl: Cluster, terms: list[str]) -> float:
     # A multi-token term therefore needs at least two overlapping tokens. This is
     # the same failure and the same cure as the CTA category matcher, where a
     # one-token category scored a perfect 1.0 off one incidental article word.
+    # 2026-08-12 note — this SCORER is correct; the bug was in what it is FED.
+    #
+    # The >=2-overlap rule below is a real safety property: a single common word
+    # ("local" in "Local bakery wins county pie contest") must not match the
+    # service line "Local SEO". Two tests pin it, in both directions.
+    #
+    # What was broken is the TERM SOURCE. The runner fed
+    # `content_strategy.primary_clusters` — a project's SERVICE-LINE labels
+    # ("Technical SEO", "Local SEO", "Enterprise SEO") — into a NEWS-relevance
+    # scorer. Those describe what the agency SELLS, not the vocabulary its
+    # industry news is written in, so real headlines ("Search Console's
+    # generative AI report goes live", "Stack Overflow questions down 99%")
+    # share at most one incidental token with them. Measured on the seven
+    # hand-curated, unambiguously on-topic items of the 2026-08-12 loamwright
+    # issue: 6 of 7 scored 0.0 — the "worse than unknown" verdict — which is why
+    # the ranker has needed full hand-curation for five consecutive issues.
+    #
+    # The cure is `_digest_relevance_terms()`: prefer a project's
+    # `weekly_digest.relevance_terms` (news vocabulary, project level, where
+    # topic vocabulary belongs) and fall back to primary_clusters only when a
+    # project has not supplied one. Tuning the arithmetic here instead would
+    # have traded a false-negative for a false-positive and broken the guard.
     best_coverage = 0.0
     usable = 0
     for t in terms:
@@ -419,6 +441,26 @@ def _relevance(cl: Cluster, terms: list[str]) -> float:
     if best_coverage <= 0.0:
         return 0.0
     return min(1.0, 0.5 + 0.5 * best_coverage)
+
+
+def _digest_relevance_terms(bc: dict[str, Any]) -> list[str]:
+    """Resolve the term list the digest ranker scores relevance against.
+
+    Prefers ``weekly_digest.relevance_terms`` — short NEWS-topic phrases in the
+    vocabulary the industry actually writes in ("AI Overviews", "algorithm
+    update", "Search Console"). Falls back to ``content_strategy.primary_clusters``
+    so projects that have not supplied one keep their previous behaviour.
+
+    Why this exists: primary_clusters are SERVICE-LINE labels. Scoring news
+    against them is a category error that made 6 of 7 genuinely on-topic items
+    score 0.0 on the 2026-08-12 issue. Term vocabulary is a per-project fact, so
+    it lives in project config; the skill only decides which field to read.
+    """
+    wd = bc.get("weekly_digest") or {}
+    terms = wd.get("relevance_terms")
+    if isinstance(terms, list) and any(str(t).strip() for t in terms):
+        return [str(t) for t in terms if str(t).strip()]
+    return (bc.get("content_strategy") or {}).get("primary_clusters") or []
 
 
 def rank_clusters(
@@ -775,10 +817,66 @@ def dedup_followups(
     return out
 
 
+#: Default ceiling on how many of an issue's slots continuing stories may take.
+#: Overridable per project via ``weekly_digest.max_followups_per_issue``.
+DEFAULT_MAX_FOLLOWUPS_PER_ISSUE = 2
+
+
+def close_published_followups(
+    rows: list[dict[str, Any]],
+    published_followups: list[dict[str, Any]],
+    *,
+    today: str,
+) -> list[dict[str, Any]]:
+    """Mark every follow-up ACTUALLY published this issue as ``reported``.
+
+    2026-08-12 root cure. ``build_covered_update`` records only the FRESH
+    clusters (the D1 fix), so a story published as a *continuing story* kept
+    ``status: "developing"`` and was re-emitted by ``_emit_followups`` every
+    week until ``expire_and_prune_covered`` aged it out at
+    ``follow_up_window_weeks``. Measured on the live loamwright ledger: the same
+    three entries were emitted on 08-06 AND 08-12 and would have been emitted a
+    third time on 08-19 — each carrying an empty summary and a hardcoded 0.5
+    significance, displacing real reporting three weeks running.
+
+    A story that has now been told is reported, not developing. Genuinely new
+    developments re-enter through ``resolve_recurrences`` on a fresh URL, which
+    is the correct door.
+    """
+    if not published_followups:
+        return rows
+    closed: set[str] = set()
+    for fu in published_followups:
+        # Follow-up ITEMS (from _emit_followups) carry canonical_source.url —
+        # they are digest-item-shaped, NOT cluster-shaped; there is no "head".
+        # v3.42.13: the first version of this function read fu["head"]["url"],
+        # which is the CLUSTER shape, so `closed` was always empty and the whole
+        # close was a silent production no-op while its test passed against a
+        # hand-built fixture using the imagined shape. dedup_followups(), five
+        # lines up, had been reading the correct key all along. The regression
+        # test now drives _emit_followups() itself so this shape can never
+        # drift from the producer again (fixtures prove shape, production
+        # proves contract).
+        url = str((fu.get("canonical_source") or {}).get("url") or "")
+        if url:
+            closed.add(canonical_url(url))
+    if not closed:
+        return rows
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        row = dict(r)
+        if str(row.get("canonical_url") or "") in closed:
+            row["status"] = "reported"
+            row["issue_date"] = today
+        out.append(row)
+    return out
+
+
 def resolve_issue_budget(
     ranked: list[Cluster],
     raw_followups: list[dict[str, Any]],
     items_per_issue: int,
+    max_followups: int | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """Resolve the follow-up / fresh-item budget for one issue (Bug-1 / D2 fix).
 
@@ -809,7 +907,27 @@ def resolve_issue_budget(
     # Follow-ups are continuing stories; cap them so they alone cannot overflow
     # the issue. Anything trimmed here stays "developing" in covered and is
     # eligible again next week — deferred, not lost.
-    followups = list(raw_followups)[:cap]
+    #
+    # 2026-08-12 root cure. Until now the only ceiling was `items_per_issue`
+    # itself, so continuing stories got FIRST CLAIM on the entire issue budget
+    # and were never ranked against a single fresh item (`_emit_followups`
+    # hardcodes significance 0.5 and an empty summary). Measured on the
+    # 2026-08-12 loamwright issue: 3 stale entries took 3 of 7 slots, carrying
+    # no new reporting, and — because a published follow-up was never marked
+    # reported — the SAME three would have taken 3 slots again on 08-19 and
+    # 08-26. At `items_per_issue` follow-ups an issue could contain zero fresh
+    # news while still reporting success, which also opens the `keep == 0` hole
+    # that lets `finalize_issue` hand `theme_of_week` to a follow-up despite
+    # both SKILL layers promising it cannot.
+    fu_cap = (
+        DEFAULT_MAX_FOLLOWUPS_PER_ISSUE
+        if max_followups is None
+        else max(0, int(max_followups))
+    )
+    # Always leave at least one slot for fresh reporting: a "news digest" whose
+    # every item is a recycled stub is not a news digest.
+    fu_cap = min(fu_cap, max(0, cap - 1))
+    followups = list(raw_followups)[:fu_cap]
     while True:
         keep = max(0, cap - len(followups))
         published_urls = {canonical_url(c["head"]["url"]) for c in ranked[:keep]}
@@ -1171,7 +1289,7 @@ def main() -> None:
     ranked = rank_clusters(
         kept,
         now_iso=now_iso,
-        project_terms=bc.get("content_strategy", {}).get("primary_clusters", []),
+        project_terms=_digest_relevance_terms(bc),
         authority_domains=authority_domains,
     )
 
@@ -1193,7 +1311,14 @@ def main() -> None:
     # (Bug 1). The dedup excludes against what is ACTUALLY published (ranked[:keep]),
     # not all of `ranked`. Follow-ups are counted against items_per_issue (D2 cap).
     followups, keep = resolve_issue_budget(
-        ranked, _emit_followups(covered, window, now_iso), items_per_issue
+        ranked,
+        _emit_followups(covered, window, now_iso),
+        items_per_issue,
+        max_followups=(
+            None
+            if cfg.get("max_followups_per_issue") is None
+            else int(cfg["max_followups_per_issue"])
+        ),
     )
     # Fresh items lead, follow-ups trail, theme = top FRESH story (2026-08-02
     # root cure — pre-cure prepend+items[0] made a stale follow-up the theme/H1
@@ -1218,7 +1343,11 @@ def main() -> None:
         _update_covered(
             slug,
             lambda existing: expire_and_prune_covered(
-                build_covered_update(existing, published_new, today=today),
+                close_published_followups(
+                    build_covered_update(existing, published_new, today=today),
+                    followups,
+                    today=today,
+                ),
                 window_weeks=window,
                 retention_weeks=retention_weeks,
                 today=today,

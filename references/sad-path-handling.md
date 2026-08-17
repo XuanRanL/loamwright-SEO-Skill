@@ -316,7 +316,7 @@ This 4-part structure goes into every error message. Never just print a stack tr
 
 ## Reading this file
 
-This file is loaded by every L2 phase orchestrator and the editor-in-chief agent.
+This file is loaded by every L2 phase orchestrator. (It formerly also named the editor-in-chief agent as a consumer; that agent is PARKED/not wired — 2026-08-12 wiring audit.)
 
 When an L2 hits an exception, it should:
 1. Map the exception type to category (A-E)

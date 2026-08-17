@@ -71,7 +71,9 @@ def collect_anchors(markdown: str) -> list[Anchor]:
     anchors: list[Anchor] = []
     used: set[str] = set()
     for i, line in enumerate(markdown.splitlines(), 1):
-        m2 = re.match(r"^(#{2,3})\s+(.+?)\s*(?:\{#[^}]+\})?\s*$", line)
+        m2 = re.match(
+            r"^(#{2,3})\s+(.+?)\s*(?:" + heading_anchor.ANCHOR_FRAGMENT + r")?\s*$",
+            line)
         if m2:
             level = len(m2.group(1))
             text = m2.group(2).strip()

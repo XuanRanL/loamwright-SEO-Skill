@@ -1072,6 +1072,76 @@ def _cta_url_matches_brief(hrefs: list[str], expected_url: str | None) -> bool:
     return any(h.rstrip("/") == expected_url.rstrip("/") for h in hrefs)
 
 
+def _plain_text(fragment: str) -> str:
+    """Tag-strip + entity-unescape + whitespace-collapse + casefold, for
+    content-identity comparison between authored CTA copy and rendered HTML."""
+    import html as _html
+
+    txt = re.sub(r"<[^>]+>", " ", fragment)
+    txt = _html.unescape(txt)
+    return re.sub(r"\s+", " ", txt).strip().casefold()
+
+
+def _markdown_to_plain(md: str) -> str:
+    """Markdown CTA copy → the plain text WordPress renders: drop bold markers,
+    reduce links to their anchor text, then normalize like _plain_text."""
+    txt = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", md)
+    txt = txt.replace("**", "")
+    return re.sub(r"\s+", " ", txt).strip().casefold()
+
+
+def check_cta_not_duplicated(html: str, workspace_task_id: str | None) -> CheckResult:
+    """Check 30 — the CTA content appears at most ONCE per registered placement
+    on the live page (2026-08-17).
+
+    Why check 29 alone is not enough: it counts TOKEN-TAGGED blocks (>= applied),
+    so it is structurally blind to an extra UNTAGGED copy. Found live on post
+    38418: a mid-repair heading rename made the injected block invisible to the
+    injector's classification-based idempotency, the driver re-injected, and the
+    page shipped with the identical paragraph + WooCommerce grid twice — one
+    styled, one bare — while checks 29/visual-density stayed green. This check
+    keys on CONTENT identity (the registered cta-draft.json copy), which no
+    rename can hide."""
+    cid, label = "30_cta_not_duplicated", "CTA content not duplicated on the live page"
+    if not workspace_task_id:
+        return CheckResult(id=cid, label=label, passed=True,
+                           detail="no workspace given (skipped)")
+    try:
+        draft_path = (Path(__file__).resolve().parents[2]
+                      / "memory" / "workspace" / workspace_task_id / "cta-draft.json")
+        if not draft_path.exists():
+            return CheckResult(id=cid, label=label, passed=True,
+                               detail="no cta-draft.json (skipped)")
+        blocks = json.loads(draft_path.read_text(encoding="utf-8")).get("blocks") or {}
+    except Exception as e:  # unreadable artifact is not a live-page verdict
+        return CheckResult(id=cid, label=label, passed=True, severity="warn",
+                           detail=f"cta-draft.json unreadable (non-blocking): {e}")
+    if not isinstance(blocks, dict) or not blocks:
+        return CheckResult(id=cid, label=label, passed=True,
+                           detail="no registered CTA blocks (skipped)")
+
+    haystack = _plain_text(_body_html(html))
+    dupes: list[str] = []
+    for placement, blk in blocks.items():
+        if not isinstance(blk, dict):
+            continue
+        needle = _markdown_to_plain(str(blk.get("text") or ""))[:160]
+        if len(needle) < 40:  # too short to be a reliable identity
+            continue
+        n = haystack.count(needle)
+        if n > 1:
+            dupes.append(f"placement '{placement}': copy appears {n}× (expected 1)")
+    if dupes:
+        return CheckResult(
+            id=cid, label=label, passed=False,
+            detail="; ".join(dupes) + " — a duplicate CTA block is live (one copy is "
+                   "likely under a renamed/untagged heading). Delete the unregistered "
+                   "copy from draft.md, re-publish, re-verify.",
+        )
+    return CheckResult(id=cid, label=label, passed=True,
+                       detail=f"{len(blocks)} registered placement(s), no content duplication")
+
+
 def check_cta_module_rendered(html: str, workspace_task_id: str | None,
                               site_slug: str = "") -> CheckResult:
     """Check 29 — the designed CTA module is class-tagged on the live page (v3.34).
@@ -1318,6 +1388,11 @@ def verify_post(
     # Check 29 — CTA module rendered live (v3.34): when the cta-injection stage
     # applied placements, the publisher must have class-tagged the block(s).
     checks.append(check_cta_module_rendered(rendered, workspace_task_id, site_slug))
+
+    # Check 30 — CTA content not DUPLICATED live (2026-08-17): check 29 counts
+    # tagged blocks (>= applied) and is blind to an extra untagged copy under a
+    # renamed heading; this one keys on content identity.
+    checks.append(check_cta_not_duplicated(rendered, workspace_task_id))
 
     fail_count = sum(1 for c in checks if not c.passed and c.severity == "fail")
     warn_count = sum(1 for c in checks if not c.passed and c.severity == "warn")

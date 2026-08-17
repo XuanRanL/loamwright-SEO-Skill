@@ -31,6 +31,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts._core.provenance import PREWRITER_WEEKLY_DIGEST
+
 # Plugin root is 2 levels up from scripts/research/
 PLUGIN_ROOT: Path = Path(__file__).resolve().parents[2]
 
@@ -111,6 +113,123 @@ def _fit_title(text: str, *, lo: int = 50, hi: int = 65) -> str:
 
     # Step 3 — never ship a dangling tail
     return _strip_dangling_tail(text)
+
+
+# --- Abstract composition (2026-08-12 root cure) ----------------------------
+#
+# `abstract_seed` used to be `theme_of_week` — the week's HEADLINE — and
+# assemble.py emits abstract_seed VERBATIM as the whole `## Abstract` body. Every
+# NON-digest format gets a 545-1111 char paragraph there from the outline-architect
+# LLM stage, which the pre-writer silently deletes for digests. So the Abstract is
+# COMPOSED here, from prose the digest already holds (`items[].summary` is
+# extract-verified), never generated: a script must not invent claims about the
+# week's news.
+#
+# It stays in `abstract_seed` (NOT a writer section) on purpose: writer sections
+# are emitted AFTER the ToC, which would push the Abstract below the fold and
+# shift every `outline.sections[].index` that section_completeness_check diffs.
+
+_ABSTRACT_WORDS_LO: int = 60
+_ABSTRACT_WORDS_HI: int = 90
+
+_SENTENCE_SPLIT_RE = re.compile(r'(?<=[.!?])\s+(?=["“‘(]?[A-Z0-9])')
+
+# A period inside these never ends a sentence.
+_ABBREVIATIONS: frozenset[str] = frozenset({
+    "mr.", "mrs.", "ms.", "dr.", "prof.", "sr.", "jr.", "st.", "no.", "vs.",
+    "inc.", "corp.", "ltd.", "co.", "e.g.", "i.e.", "u.s.", "u.k.", "eu.",
+    "fig.", "est.", "approx.", "vol.",
+})
+
+_COUNT_WORDS: tuple[str, ...] = (
+    "zero", "one", "two", "three", "four", "five", "six",
+    "seven", "eight", "nine", "ten", "eleven", "twelve",
+)
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split *text* into sentences, tolerating abbreviations and decimals.
+
+    Decimals ("0.7% of 207,204") are safe by construction: the split needs
+    whitespace after the period. Abbreviations are re-joined explicitly.
+    """
+    flat = " ".join((text or "").split())
+    if not flat:
+        return []
+    out: list[str] = []
+    for part in _SENTENCE_SPLIT_RE.split(flat):
+        if out:
+            words = out[-1].split()
+            last = words[-1].lower() if words else ""
+            # "Dr." / "U.S." / any single-letter initial ("J. Dean")
+            if last in _ABBREVIATIONS or (len(last) == 2 and last[0].isalpha() and last[1] == "."):
+                out[-1] = f"{out[-1]} {part}"
+                continue
+        out.append(part)
+    return [s.strip() for s in out if s.strip()]
+
+
+def _count_word(n: int) -> str:
+    return _COUNT_WORDS[n] if 0 <= n < len(_COUNT_WORDS) else str(n)
+
+
+def compose_abstract(
+    items: list[dict[str, Any]],
+    *,
+    industry_short: str,
+    lo: int = _ABSTRACT_WORDS_LO,
+    hi: int = _ABSTRACT_WORDS_HI,
+) -> str:
+    """Compose a 60-90 word Abstract from the digest's own item summaries.
+
+    One framing sentence (the only non-digest prose, and it states nothing that
+    is not a fact about the issue itself) followed by the leading sentence of each
+    story in ranked order, while the budget allows. If that lands short, each
+    story's SECOND sentence is added next to its first, so the paragraph never
+    jumps out of narrative order.
+
+    Deliberately does NOT touch `theme_of_week` or `tldr_seed`: the TL;DR sits
+    directly above the Abstract on the page and duplicating it wastes the slot.
+    Never pads to reach *lo* — a short digest yields a short Abstract rather than
+    a fabricated one.
+    """
+    per_item: list[list[str]] = [_split_sentences(str(it.get("summary") or "")) for it in items]
+    if not any(per_item):
+        return ""
+
+    framing = (
+        f"This week's {industry_short} roundup covers "
+        f"{_count_word(len(items))} developments."
+    )
+    total = len(framing.split())
+
+    chosen: list[list[str]] = [[] for _ in per_item]
+    for i, sents in enumerate(per_item):
+        if not sents:
+            continue
+        words = len(sents[0].split())
+        # The lead story always makes it in, even if it alone overshoots `hi`:
+        # verbatim factual prose beats a clause-mangling truncation.
+        if chosen and any(chosen) and total + words > hi:
+            break
+        chosen[i].append(sents[0])
+        total += words
+
+    if total < lo:
+        for i, sents in enumerate(per_item):
+            if len(sents) < 2 or not chosen[i]:
+                continue
+            words = len(sents[1].split())
+            if total + words > hi:
+                continue
+            chosen[i].append(sents[1])
+            total += words
+            if total >= lo:
+                break
+
+    body = " ".join(" ".join(c) for c in chosen if c)
+    # Em/en dashes are hard-vetoed in the body by render_lint L12.
+    return _clean_theme(f"{framing} {body}")
 
 
 def _industry_short(bc: dict[str, Any]) -> str:
@@ -440,8 +559,13 @@ def build_outline(
 
     total_budget = sum(s["word_budget"] for s in sections)
 
+    # 2026-08-12 root cure: a real Abstract, composed from the digest's own
+    # extract-verified summaries. `theme` is the last-resort fallback only when
+    # every item shipped an empty summary (it is what used to ship ALWAYS).
+    abstract = compose_abstract(items, industry_short=ind_short) or theme
+
     return {
-        "abstract_seed": theme,
+        "abstract_seed": abstract,
         "tldr_seed": f"This week in {ind_short}: {theme}",
         "takeaways_seeds": takeaways,
         "sections": sections,
@@ -457,20 +581,213 @@ def build_outline(
     }
 
 
+# --- Cover negative prompt (2026-08-12 root cure) ---------------------------
+#
+# `build_image_prompts` never received `bc`, so it structurally COULD NOT read
+# project config, and every issue ever produced shipped `negative_prompt: None`.
+# Meanwhile projects/{slug}/brand-guideline.yaml already carried
+# `negative_prompt_baseline` (forbidding third-party logos AND empty label chips)
+# with no reader on this path — and a third-party logo rendered into the cover on
+# 2026-08-02, 08-06 and 08-12, each costing a ~$1.67 regeneration round that the
+# vision-QA agent closed by hand-writing negatives the config already contained.
+#
+# The consumer is live: openai_image_pipeline._adapt_entry appends
+# "\n\nAVOID: {negative_prompt}" to the prompt it sends, and
+# art_direction_compiler.compile_prompt appends it as "Additional negatives".
+
+_BRAND_BAN_CLAUSE: str = (
+    "no third-party brand logos, wordmarks, product chrome or on-screen brand "
+    "names on walls, screens, mugs, clothing or signage, and none in reflections "
+    "or shadows"
+)
+
+_LEGIBLE_UI_CLAUSE: str = (
+    "no empty or placeholder label chips: every depicted UI label, axis tick, KPI "
+    "tile and legend must carry a legible, plausible value"
+)
+
+# Guardrail against a pathological digest, not a curation rule.
+_MAX_BANNED_ENTITIES: int = 40
+
+
+def _brand_guideline_text_fallback(text: str) -> dict[str, Any]:
+    """Minimal reader for the few keys we need when PyYAML is unimportable.
+
+    Handles exactly the shape `scripts/build/*` generates: a top-level folded
+    scalar `negative_prompt_baseline: >` plus two nested booleans. Anything it
+    cannot find is simply absent — never guessed.
+    """
+    out: dict[str, Any] = {}
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        m = re.match(r"^negative_prompt_baseline:\s*([>|][-+]?)?\s*(.*)$", line)
+        if not m:
+            continue
+        inline = m.group(2).strip()
+        if inline and not m.group(1):
+            out["negative_prompt_baseline"] = inline.strip("'\"")
+        else:
+            body: list[str] = []
+            for nxt in lines[i + 1:]:
+                if not nxt.strip():
+                    if body:
+                        break
+                    continue
+                if not nxt[:1].isspace():
+                    break
+                body.append(nxt.strip())
+            if body:
+                out["negative_prompt_baseline"] = " ".join(body)
+        break
+
+    for key, section in (
+        ("forbid_third_party_brands", "packaging_branding"),
+        ("forbid_empty_label_chips", "realism"),
+    ):
+        m2 = re.search(rf"^\s+{key}:\s*(true|false)\b", text, re.M | re.I)
+        if m2:
+            sect = out.setdefault(section, {})
+            if isinstance(sect, dict):
+                sect[key] = m2.group(1).lower() == "true"
+
+    m3 = re.search(r'^\s+label_text:\s*["\']?([^"\'#\n]+)', text, re.M)
+    if m3:
+        sect = out.setdefault("packaging_branding", {})
+        if isinstance(sect, dict):
+            sect["label_text"] = m3.group(1).strip()
+    return out
+
+
+def load_brand_guideline(slug: str, *, plugin_root: Path | None = None) -> dict[str, Any]:
+    """Read ``projects/{slug}/brand-guideline.yaml`` defensively.
+
+    Missing file, unreadable file, malformed YAML and an unimportable PyYAML all
+    degrade to a partial/empty dict — never an exception. The pre-writer runs
+    before any agent and must not be able to abort the weekly issue over config.
+    """
+    if not slug:
+        return {}
+    root = Path(plugin_root) if plugin_root is not None else PLUGIN_ROOT
+    path = root / "projects" / slug / "brand-guideline.yaml"
+    if not path.is_file():
+        return {}
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return {}
+    try:
+        import yaml  # type: ignore[import-untyped]  # optional dependency
+
+        data = yaml.safe_load(text)
+        if isinstance(data, dict):
+            return data
+    except Exception:  # ImportError, ScannerError, … — fall through to text mode
+        pass
+    return _brand_guideline_text_fallback(text)
+
+
+def _section(cfg: dict[str, Any], key: str) -> dict[str, Any]:
+    val = cfg.get(key)
+    return val if isinstance(val, dict) else {}
+
+
+def issue_entities(digest: dict[str, Any], *, exclude: tuple[str, ...] = ()) -> list[str]:
+    """Every named entity in THIS issue, deduped, first-mention order.
+
+    Derived from ``items[].entities`` on purpose — a hardcoded platform list
+    would go stale the first week a new engine ships.
+    """
+    skip = {e.strip().lower() for e in exclude if e}
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in digest.get("items", []) or []:
+        for raw in item.get("entities", []) or []:
+            name = " ".join(str(raw).split())
+            key = name.lower()
+            if not name or key in seen or key in skip:
+                continue
+            seen.add(key)
+            out.append(name)
+    return out[:_MAX_BANNED_ENTITIES]
+
+
+def build_negative_prompt(
+    digest: dict[str, Any],
+    bg: dict[str, Any],
+    *,
+    bc: dict[str, Any] | None = None,
+) -> str:
+    """Compose the cover slot's negative prompt from project config + this issue.
+
+    Three layers: the project's ``negative_prompt_baseline`` verbatim, a
+    format-level ban on third-party marks, and the entities THIS issue names.
+    ``packaging_branding.forbid_third_party_brands: false`` (a deliberate project
+    contract — project-echo depicts real brands as the subject) suppresses the last two.
+    """
+    parts: list[str] = []
+
+    baseline = " ".join(str(bg.get("negative_prompt_baseline") or "").split()).strip()
+    if baseline:
+        parts.append(baseline)
+
+    packaging = _section(bg, "packaging_branding")
+    realism = _section(bg, "realism")
+
+    if packaging.get("forbid_third_party_brands") is not False:
+        parts.append(_BRAND_BAN_CLAUSE)
+        own = (
+            str(packaging.get("label_text") or ""),
+            str((bc or {}).get("brand_name") or ""),
+            str(_section(bc or {}, "company").get("name") or ""),
+        )
+        named = issue_entities(digest, exclude=own)
+        if named:
+            parts.append(
+                "specifically no logo, wordmark or rendered name reading: "
+                + ", ".join(named)
+            )
+
+    if realism.get("forbid_empty_label_chips") is True:
+        parts.append(_LEGIBLE_UI_CLAUSE)
+
+    # Clause separator is "; " EXCEPT after a part that already ends a sentence —
+    # the brand-guideline baseline is carried verbatim (trailing period included),
+    # and "hands.; no third-party…" is not what anyone wrote.
+    text = ""
+    for part in parts:
+        if not text:
+            text = part
+        elif text.endswith((".", "!", "?")):
+            text = f"{text} {part}"
+        else:
+            text = f"{text}; {part}"
+    return text
+
+
 def build_image_prompts(
     digest: dict[str, Any],
     *,
     task_id: str,
+    bc: dict[str, Any] | None = None,
+    plugin_root: Path | None = None,
 ) -> dict[str, Any]:
     """Build the ``image-prompts.json`` artifact.
 
     Returns a single ``cover`` photo slot.  No chart slots are emitted — the
     chart-render step no-ops when there are no chart slots.
+
+    *bc* is optional only for backward compatibility with existing callers; when
+    it is absent the project slug still resolves from ``digest['project_slug']``,
+    so the brand-guideline is read either way.
     """
     theme: str = _clean_theme(digest.get("theme_of_week", "Weekly industry news"))
     items: list[dict[str, Any]] = digest.get("items", [])
     headline: str = items[0]["headline"] if items else theme
     generated_at: str = digest.get("generated_at", "")
+
+    slug: str = str((bc or {}).get("slug") or digest.get("project_slug") or "").strip()
+    brand_guideline = load_brand_guideline(slug, plugin_root=plugin_root)
+    negative_prompt = build_negative_prompt(digest, brand_guideline, bc=bc)
 
     return {
         "task_id": task_id,
@@ -492,6 +809,9 @@ def build_image_prompts(
                     "Professional news-style composition, clean background, "
                     "high contrast, absolutely no text or overlays."
                 ),
+                # Consumed by openai_image_pipeline._adapt_entry ("AVOID: …") and
+                # art_direction_compiler.compile_prompt ("Additional negatives").
+                "negative_prompt": negative_prompt,
                 "alt_text_seed": f"Cover photo for: {theme}",
                 "filename_seed": f"{task_id}-cover",
             }
@@ -511,11 +831,19 @@ def write_artifacts(
     task_id: str,
     ws_dir: Path,
     now_iso: str,
+    plugin_root: Path | None = None,
 ) -> list[str]:
     """Write all 5 pipeline artifacts to *ws_dir*.
 
     Creates *ws_dir* if it does not exist.  Writes are plain Python file I/O
     (not through the PostToolUse schema-validate hook).
+
+    Every artifact is stamped ``_generated_by: "weekly-digest-prewriter"``:
+    ``outline.json`` and ``image-prompts.json`` are OWNED by real LLM stages
+    (outline-architect / image-prompt-designer) that this pre-write skips, and
+    without the stamp that skip is invisible — on 2026-08-12 both stages recorded
+    "completed" 3ms apart with nothing dispatched. See
+    ``scripts/_core/provenance.py`` (``PROVENANCE_ADVISORY``, ``--check``).
 
     Returns:
         List of absolute path strings for each written file.
@@ -528,11 +856,15 @@ def write_artifacts(
         "research.json": build_research(digest, bc),
         "angle.json": build_angle(digest, bc, task_id=task_id),
         "outline.json": build_outline(digest, bc),
-        "image-prompts.json": build_image_prompts(digest, task_id=task_id),
+        "image-prompts.json": build_image_prompts(
+            digest, task_id=task_id, bc=bc, plugin_root=plugin_root
+        ),
     }
 
     paths: list[str] = []
     for name, data in artifacts.items():
+        if isinstance(data, dict):
+            data["_generated_by"] = PREWRITER_WEEKLY_DIGEST
         p = ws / name
         p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         paths.append(str(p))

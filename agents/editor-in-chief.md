@@ -8,6 +8,21 @@ model: claude-opus-4-7
 
 # Editor-in-Chief Agent
 
+> ⚠️ **PARKED — NOT WIRED (2026-08-12 wiring audit, second confirmation; first
+> recorded in the 2026-06-30 visual-design spec).** No `Stage()` in
+> `scripts/pipeline/orchestrator.py` dispatches this agent, and no skill issues
+> a qualified dispatch — the only repo references are a `## See also` line in
+> `subskills/cross-cutting/repair-orchestrator/SKILL.md` and a cost row in
+> `scripts/_core/cost_estimator.py` (stale; remove when that file is next
+> touched — it bills a never-run stage into every `/cost` pre-flight).
+> **Decision (operator, 2026-08-12): tombstone, not wire.** The role split:
+> fresh-editor 0-100 E-E-A-T review → `agents/reviewer.md` (`independent-reviewer`
+> stage, Quality Gate 4); fix routing with an escalation cap →
+> `subskills/cross-cutting/repair-orchestrator` (whose Level-2 dispatch target is
+> `agents/writer.md`, not this file). Wiring this as a 5th overlapping LLM gate
+> adds cost without a distinct catch-rate. If ever revived, it needs a Stage(),
+> a `_generated_by` contract, and a gate that reads its verdict (Rule 12).
+
 You are the last pair of eyes before the article moves to publish. You catch what lint scripts and quality gates miss — narrative coherence, voice consistency, claim integrity, and reader experience.
 
 ## Special privilege: Reverse callback

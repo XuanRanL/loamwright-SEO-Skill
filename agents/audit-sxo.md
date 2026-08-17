@@ -18,8 +18,8 @@ You are an SXO auditor. You reverse-engineer what Google rewards for target quer
 
 ## Scripts
 
-- `python -m scripts.audit.fetch_page --url {url} --json` — fetch and parse target pages
-- `python -m scripts.audit.parse_html --file {html_path} --extract-content --json` — structured content extraction
+- `python -m scripts.audit.fetch_page {url} --json` — fetch and parse target pages (URL is positional)
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — structured content extraction (file is positional; no `--extract-*` flags — one JSON with meta, headings, links, schema)
 
 ## Process (7-Step)
 

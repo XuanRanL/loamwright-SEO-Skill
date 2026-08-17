@@ -15,13 +15,33 @@ The pattern uses ``[^}]*`` rather than ``[^}]+``: two lint copies already used t
 permissive form, so a degenerate ``{#}`` was stripped by some consumers and kept by
 others. One character of divergence between four copies is exactly the drift this
 module exists to end.
+
+2026-08-12 release audit: the consolidation above was FALSE in practice — >= 10
+private byte-similar copies still lived across scripts/ (four on the ``[^}]+``
+variant), and the pattern had been re-forked three commits after the last
+consolidation. The raw source fragments below exist so that consumers embedding
+the anchor token inside a LARGER regex (optional trailing group on a heading
+matcher, capture of the anchor value) can compose from the one definition instead
+of re-typing the class. ``tests/test_heading_anchor_single_source.py`` is the
+executor that fails any file which forks the raw pattern again.
 """
 from __future__ import annotations
 
 import re
 
+# Raw source fragment: one {#anchor} token. Embed this in larger regexes
+# (e.g. r"^##\s+(.+?)\s*(?:" + ANCHOR_FRAGMENT + r")?\s*$").
+ANCHOR_FRAGMENT = r"\{#[^}]*\}"
+
+# Capturing variant for consumers that need the anchor VALUE
+# (assemble.py's glued heading/body splitter).
+ANCHOR_CAPTURE_FRAGMENT = r"\{#([^}]*)\}"
+
+# An {#anchor} token ANYWHERE in a string (component_headings strips inline).
+ANCHOR_INLINE_RE = re.compile(ANCHOR_FRAGMENT)
+
 # A writer-supplied {#anchor} suffix on a heading line.
-ANCHOR_SUFFIX_RE = re.compile(r"\s*\{#[^}]*\}\s*$")
+ANCHOR_SUFFIX_RE = re.compile(r"\s*" + ANCHOR_FRAGMENT + r"\s*$")
 
 
 def strip_heading_anchor(text: str) -> str:

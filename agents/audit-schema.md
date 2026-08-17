@@ -18,7 +18,7 @@ You are a structured data auditor. You evaluate JSON-LD implementation across a 
 
 ## Scripts
 
-- `python -m scripts.audit.parse_html --file {html_path} --extract-schema --json` — extract all JSON-LD blocks from a page
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — the output's `schema` array carries every JSON-LD block from the page (file is positional; no `--extract-schema` flag exists)
 
 ## Reference Files
 

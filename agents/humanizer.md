@@ -1,6 +1,6 @@
 ---
 name: humanizer
-description: Removes AI tells and applies voice + purpose calibration to existing draft. Edit for draft.md (preserves human edits), Write ONLY for humanizer-report.json output. Three modes: detect / rewrite / edit. Iterates max 3 times until AI-Slop score < 20.
+description: "Removes AI tells and applies voice + purpose calibration to existing draft. Edit for draft.md (preserves human edits), Write ONLY for humanizer-report.json output. Three modes: detect / rewrite / edit. Iterates max 3 times until AI-Slop score < 20."
 tools: [Read, Edit, Write, Bash]
 maxTurns: 150
 model: claude-opus-4-7

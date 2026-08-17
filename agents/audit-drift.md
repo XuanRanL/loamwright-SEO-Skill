@@ -16,10 +16,14 @@ Previous baseline exists: `{audit_dir}/baseline/` directory present, OR `config.
 - `{audit_dir}/baseline/modules/*.json` — prior module scores
 
 ## Scripts
-- `python -m scripts.audit.drift_compare --current {cur} --baseline {base} --json`
-- `python -m scripts.monitor.drift_compare --current {cur} --baseline {base} --json` (alternate path)
+There is NO executor for the audit-dir comparison this agent performs — no
+`scripts.audit.drift_compare` module exists. Read `crawl-results.json` and
+`baseline/crawl-results.json` yourself and apply the 17 rules below manually.
 
-If scripts unavailable, read both files and apply the 17 rules manually.
+Related but DIFFERENT workflow: `python -m scripts.monitor.drift_compare --site {project_slug} --url {live_url} --json`
+compares ONE published URL against its SQLite baseline in
+`projects/{slug}/baselines/drift.sqlite` (the /drift monitor path). It does not
+read audit-dir crawl results and takes no `--current`/`--baseline` flags.
 
 ## 17 Comparison Rules
 

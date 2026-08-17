@@ -117,6 +117,19 @@ For each pending entry (call `batch_queue next --batch-id X` until empty):
      set `target_market_locale` to the keyword's dialect only if the audience
      really is that market — `spelling_dialect_check` auto-exempts the exact
      keyword's inflections either way (v3.41.3).
+   - QUALITY TARGET (v3.42.16): OMIT `quality_target_score` from the brief
+     unless the operator explicitly requested a stricter bar. The enforced
+     default is `scripts/_core/review_target.py :: DEFAULT_REVIEW_TARGET` (80);
+     the schema annotation is pinned to that constant by
+     `tests/test_review_target_single_source.py`. Do NOT copy a number out of
+     the schema into the brief "to be safe" — a bootstrapped 95 (the schema's
+     old, enforced-by-nothing annotation) burned six reviewer/repair rounds on
+     2026-08-17 against content every review round called clean. Review scores
+     are LLM judgments with ±4-point run-to-run variance; a target above ~90
+     turns that variance into an unpassable gate. If a mis-set target is
+     discovered mid-run, the sanctioned correction is
+     `file_bus.update_state(task_id, brief=...)` plus a note in the batch-queue
+     entry — never a silent edit, and NEVER an edit to review.json's score.
 
 4. Invoke L1 seo-blog SKILL.md with this task_id:
    - This runs the FULL pipeline (research → plan → build → optimize → publish → monitor baseline)
@@ -197,6 +210,29 @@ Does:
 3. For status=running entries: invoke `/resume {task_id}` instead of fresh L1
 4. For status=pending: standard new L1 invocation
 5. Continue until queue exhausted
+
+### One operator per task (2026-08-17)
+
+The runner's `.pipeline-driver.lock` serializes `run_pipeline` INVOCATIONS, but no
+lock can stop two OPERATORS — a resumed/background driver and the parent session —
+from editing the same workspace's artifacts concurrently. On 2026-08-17 a parent
+session hand-repaired a draft and dispatched its own reviewer while the background
+driver it had earlier resumed was still running its own repair rounds on the same
+task; the two interleaved without corruption only by luck, and the task ended up
+marked `failed` in the batch queue while its artifacts said otherwise. The rule:
+
+- A task has exactly ONE operator at a time. Before taking over a task you
+  delegated, either (a) confirm the driver has terminated (its final report
+  arrived and it holds no live children), or (b) explicitly order it to stand
+  down and wait for the acknowledgment.
+- Never repair artifacts of a task whose driver may still be live. To see where
+  a possibly-live task really is, read `state.json :: stage_history` — never
+  invoke the runner as a "status check" (that is the v3.36.2 double-publish
+  pattern this file already bans).
+- A batch-queue status set by a driver that was later overridden (e.g. `failed`
+  on a task that then completed) must be corrected with a note explaining the
+  override — the queue is the operator-facing record; a stale `error` field on a
+  completed entry reads as an unresolved defect in the next audit.
 
 ## Cost transparency
 

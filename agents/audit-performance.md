@@ -18,7 +18,7 @@ You are a web performance auditor. You evaluate Core Web Vitals, overall perform
 
 ## Scripts
 
-- `python -m scripts.audit.pagespeed_check --url {url} --strategy {mobile|desktop} --json` — runs PageSpeed Insights API or Lighthouse CLI
+- `python -m scripts.audit.pagespeed_check {url} --strategy {mobile|desktop|both} --json` — runs PageSpeed Insights API or Lighthouse CLI (URL is positional)
 
 ## Reference Files
 

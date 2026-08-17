@@ -40,6 +40,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from scripts._core.faq_questions import extract_faq_questions
+
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
 
 MIN_PAA_FOR_GATE = 3          # fewer harvested PAA than this -> alignment not demandable
@@ -50,9 +52,6 @@ _JACCARD_MATCH = 0.5
 _FAQ_H2_RE = re.compile(
     r"^##\s+(Frequently Asked Questions|FAQ|Common Questions)\b.*$", re.I | re.M)
 _H2_RE = re.compile(r"^##\s+", re.M)
-# FAQ question forms the pipeline emits: bold-paragraph (**Q?**) or H3 heading.
-_BOLD_Q_RE = re.compile(r"^\s*\*\*(.+?)\*\*\s*$", re.M)
-_H3_Q_RE = re.compile(r"^###\s+(.+?)\s*(\{#[^}]*\})?\s*$", re.M)
 _STOPWORDS = frozenset(
     "a an the is are was were do does did can could should would will i you it "
     "my your our their of in on at to for with and or vs versus what which who "
@@ -86,21 +85,16 @@ def _extract_faq_section(body: str) -> str | None:
 
 
 def _extract_faq_questions(faq: str) -> list[dict[str, Any]]:
-    """Return [{question, answer_words}] in order. Bold-paragraph form wins;
-    falls back to H3 questions. A 'question' must contain a '?' or start with a
-    question word (avoids counting bold lead-ins like '**Bottom line:**')."""
-    out: list[dict[str, Any]] = []
-    matches = list(_BOLD_Q_RE.finditer(faq)) or list(_H3_Q_RE.finditer(faq))
-    qword = re.compile(r"^(how|what|why|when|where|which|who|can|do|does|is|are|should|will)\b", re.I)
-    for i, m in enumerate(matches):
-        q = m.group(1).strip()
-        if "?" not in q and not qword.match(q):
-            continue
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(faq)
-        answer_block = faq[m.end():end].strip()
-        first_para = next((p.strip() for p in answer_block.split("\n\n") if p.strip()), "")
-        out.append({"question": q, "answer_words": len(first_para.split()) if first_para else 0})
-    return out
+    """Delegates to the ONE shared extraction in scripts/_core/faq_questions.
+
+    Bold-paragraph form wins; falls back to H3 questions. A 'question' must
+    contain a '?' or start with a question word (avoids counting bold lead-ins
+    like '**Bottom line:**'). The extraction lived here privately until the
+    2026-08-12 audit found core_eeat_scorer C10 carrying the same regex pair
+    WITHOUT the question-shape filter (6 vs 3 on one real FAQ, Rule 12) — both
+    checkers now call scripts._core.faq_questions.extract_faq_questions.
+    """
+    return extract_faq_questions(faq)
 
 
 def _load_paa(ws: Path) -> list[str]:

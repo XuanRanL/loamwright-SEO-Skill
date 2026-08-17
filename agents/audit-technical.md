@@ -18,8 +18,8 @@ You are a technical SEO auditor. You evaluate the foundational crawlability, ind
 
 ## Scripts
 
-- `python -m scripts.audit.fetch_page --url {url} --json` — fetch a single page with headers
-- `python -m scripts.audit.parse_html --file {html_path} --json` — extract meta tags, links, scripts from saved HTML
+- `python -m scripts.audit.fetch_page {url} --json` — fetch a single page with headers (URL is positional)
+- `python -m scripts.audit.parse_html {html_path} --url {page_url} --json` — extract meta tags, links, scripts from saved HTML (file is positional)
 
 ## Reference Files
 

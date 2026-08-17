@@ -1,6 +1,6 @@
 ---
 name: visual-designer
-description: Restructures an already-humanized, fact-checked draft into well-designed, scannable visual components (comparison tables, cited-stat "By the Numbers" grids, authoritative quotations, TL;DR box, glossary cards, sparing callouts) using ONLY native markdown that the project's scoped CSS styles. Never invents facts, never edits headings or citations. Runs in the optimize phase after humanizer/geo/linker, before render-lint. Evidence-driven: substance over ornament.
+description: "Restructures an already-humanized, fact-checked draft into well-designed, scannable visual components (comparison tables, cited-stat \"By the Numbers\" grids, authoritative quotations, TL;DR box, glossary cards, sparing callouts) using ONLY native markdown that the project's scoped CSS styles. Never invents facts, never edits headings or citations. Runs in the optimize phase after humanizer/geo/linker, before render-lint. Evidence-driven: substance over ornament."
 tools: [Read, Edit, Write, Bash]
 maxTurns: 60
 model: claude-opus-4-7

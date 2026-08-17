@@ -15,10 +15,11 @@ Always spawns. Common Crawl (tier 0) is free and requires no API key. Higher tie
 - `{audit_dir}/crawl-results.json` — internal link structure for cross-reference
 
 ## Scripts
-- `python -m scripts.audit.commoncrawl_graph --domain {domain} --json` — free backlink discovery
-- `python -m scripts.audit.verify_backlinks --urls {file} --json` — HTTP-verify link existence
-- `python -m scripts.audit.moz_api --domain {domain} --json` — DA/PA + links (if key)
-- `python -m scripts.audit.bing_webmaster --domain {domain} --json` — Bing data (if key)
+(Invocations below are the REAL CLIs — positional args, not `--domain`/`--urls` flags. Pinned by `tests/test_commoncrawl_graph_cli_and_agent_doc.py`, which parses these lines against each module's actual argparse.)
+- `python -m scripts.audit.commoncrawl_graph {domain} --json` — free backlink discovery (positional domain; optional `--crawl`, `--max-download-mb`, `--cache-dir`)
+- `python -m scripts.audit.verify_backlinks {file} --json` — HTTP-verify link existence ({file} = JSON array of `{"source_url", "target_url", "anchor_text"}` objects; or pipe the array via `--stdin`)
+- `python -m scripts.audit.moz_api {domain} --json` — DA/PA + links (if key; positional domain)
+- `python -m scripts.monitor.bing_webmaster_ingest --site {site_slug} --json` — Bing Webmaster data (if key; `--site` takes the project slug, not a domain)
 
 Read `references/audit/backlink-quality.md` before analysis.
 
