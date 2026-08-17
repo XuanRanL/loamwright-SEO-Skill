@@ -503,7 +503,7 @@ Phase Publish (skills/phase-publish/SKILL.md)
   missing (render_lint.py never ran). The gate also warns on insufficient
   tables (<2) and missing schema.json.
 
-  Stages: [image-visual-qa (vision QA + regen loop) → image-curator]
+  Stages: [image-visual-qa (vision QA + regen loop)]  (image-curator: REFERENCE-ONLY, tombstoned agent — media fields owned by the scripted pipeline)
           → wordpress-publisher (creates as DRAFT — Rule 5a)
           → schema-injector → preview-URL verification
           ✋ Human checkpoint: confirm "publish" → THE flip executor (v3.42.16):

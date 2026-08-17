@@ -194,10 +194,13 @@ Write `memory/workspace/{task_id}/cta-draft.json`:
     "mid": {"heading": "Where we can help", "text": "...", "blocks_used": ["stat", "button"]},
     "end": {"heading": "Ready when you are", "text": "...", "blocks_used": ["avatar", "quote", "button"]}
   },
-  "_generated_by": "cta-writer-subagent",
-  "generated_at": "<ISO8601 timestamp>"
+  "_generated_by": "cta-writer-subagent"
 }
 ```
+
+Do NOT emit `generated_at` — you have no clock, and a fabricated round-number
+timestamp post-dating the file mtime degrades timeline forensics (2026-08-17
+audit). Deterministic writers stamp real times; file mtime is the truth here.
 
 For an **ecommerce** brief, the block carries a verbatim `shortcode` and its
 `text` is a topic-bridging intro (no link needed):
@@ -213,8 +216,7 @@ For an **ecommerce** brief, the block carries a verbatim `shortcode` and its
       "blocks_used": ["intro", "product_grid"]
     }
   },
-  "_generated_by": "cta-writer-subagent",
-  "generated_at": "<ISO8601 timestamp>"
+  "_generated_by": "cta-writer-subagent"
 }
 ```
 

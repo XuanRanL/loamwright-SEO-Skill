@@ -40,26 +40,26 @@ This becomes the foundation for all downstream stages.
 
 ### Stage 1: SERP top-10 baseline (Tavily advanced, 2 credits)
 ```
-bash: python -m scripts.fetch.tavily_search "{primary_keyword}" --depth advanced --max 10 --json
+bash: python -m scripts.fetch.tavily_search "{primary_keyword}" --depth advanced --max 10 --task-id {task_id} --json
 ```
 Result: top-10 SERP results with titles + URLs + rich snippets.
 
 ### Stage 2: Freshness signal (Tavily advanced, 2 credits)
 ```
-bash: python -m scripts.fetch.tavily_search "{primary_keyword} 2025 2026" --depth advanced --max 10 --time-range year --json
+bash: python -m scripts.fetch.tavily_search "{primary_keyword} 2025 2026" --depth advanced --max 10 --time-range year --task-id {task_id} --json
 ```
 Compare to Stage 1: which results are fresh vs evergreen?
 
 ### Stage 3: PAA extraction (Tavily advanced, 2 credits)
 ```
-bash: python -m scripts.fetch.tavily_search "{primary_keyword} faq frequently asked questions" --depth advanced --max 10 --json
+bash: python -m scripts.fetch.tavily_search "{primary_keyword} faq frequently asked questions" --depth advanced --max 10 --task-id {task_id} --json
 ```
 Use result snippets to extract PAA questions. Look for question-format strings.
 
 ### Stage 4: Competitor deep extract (Tavily extract ×5 URLs)
 For top-5 SERP results (excluding own domain if /init detected):
 ```
-bash: python -m scripts.fetch.tavily_extract <url1> <url2> <url3> <url4> <url5> --depth advanced --json
+bash: python -m scripts.fetch.tavily_extract <url1> <url2> <url3> <url4> <url5> --depth advanced --task-id {task_id} --json
 ```
 Spawn `researcher` agent if extraction needs Crossref or page fetch fallbacks.
 

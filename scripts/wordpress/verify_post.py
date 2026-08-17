@@ -1090,6 +1090,22 @@ def _markdown_to_plain(md: str) -> str:
     return re.sub(r"\s+", " ", txt).strip().casefold()
 
 
+_CTA_QUOTE_FOLD = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"'})
+
+
+def _canon_cta_text(txt: str) -> str:
+    """Fold the transforms that sit between cta-draft.json's RAW text and the
+    rendered page: cta_injector.sanitize_copy() at inject time (em-dash → ", ",
+    ASCII ' → ’, curly doubles → ") and wptexturize at render time (ASCII
+    quotes → curly). Folding BOTH sides to one canonical shape makes the
+    content identity immune to WHICH side transformed. Without this, any CTA
+    copy with an apostrophe or em-dash in its first 160 chars made check 30
+    unable to fail for its reason (found 2026-08-17, Rule 14). The em-dash rule
+    mirrors sanitize_copy — pinned by test_canon_folds_sanitize_copy."""
+    txt = re.sub(r"\s*—\s*", ", ", txt)
+    return txt.translate(_CTA_QUOTE_FOLD)
+
+
 def check_cta_not_duplicated(html: str, workspace_task_id: str | None) -> CheckResult:
     """Check 30 — the CTA content appears at most ONCE per registered placement
     on the live page (2026-08-17).
@@ -1120,12 +1136,12 @@ def check_cta_not_duplicated(html: str, workspace_task_id: str | None) -> CheckR
         return CheckResult(id=cid, label=label, passed=True,
                            detail="no registered CTA blocks (skipped)")
 
-    haystack = _plain_text(_body_html(html))
+    haystack = _canon_cta_text(_plain_text(_body_html(html)))
     dupes: list[str] = []
     for placement, blk in blocks.items():
         if not isinstance(blk, dict):
             continue
-        needle = _markdown_to_plain(str(blk.get("text") or ""))[:160]
+        needle = _markdown_to_plain(_canon_cta_text(str(blk.get("text") or "")))[:160]
         if len(needle) < 40:  # too short to be a reliable identity
             continue
         n = haystack.count(needle)

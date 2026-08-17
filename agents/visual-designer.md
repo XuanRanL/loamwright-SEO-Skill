@@ -112,4 +112,4 @@ is met before finishing.
 - ❌ Touch an injected CTA module block (`### Your next step`-class H3 + its single
   paragraph, publisher-tagged `.xr-cta-box`) — do not move, re-style, wrap, or
   componentize it; it is config-authored (business-context.cta) and machine-verified
-  by the cta_module pre-publish gate.
+  by the cta_module pre-publish gate. The AUTHORITATIVE machine-owned headings for THIS draft are `memory/workspace/{task}/cta-draft.json :: blocks[*].heading` — READ that file before touching any H3 you did not write; the example headings here are illustrative, NOT exhaustive (the 38418 duplicate shipped precisely because a registered heading, "One more thing", matched no example).

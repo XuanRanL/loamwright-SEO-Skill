@@ -53,7 +53,7 @@ Per claude-blog research data:
 ## Visual elements
 
 - **Tables**: ≥2 per article, at least one in front 50%
-- **Images**: 1 cover (16:9) + 3 inline (varies by format)
+- **Images**: 1 cover (16:9) + `image_count − 1` inline (default 6 total → 5 inline; scripts/_core/image_policy.py; varies by format/brief)
 - **Charts**: Optional, use for comparison data
 - **Video embed**: Optional, only if relevant + adds value (don't embed for engagement metrics)
 

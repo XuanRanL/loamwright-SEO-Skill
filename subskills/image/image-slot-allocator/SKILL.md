@@ -61,7 +61,7 @@ for it in the first place.
 
 ## Allocation by format
 
-Per `references/image/format-style-mapping.md`:
+Per `references/image/format-style-mapping.md` — the table lists each format's first three PRIORITY subjects; at the default `image_count` 6 there are 5 inline slots (`scripts/_core/image_policy.py`), so continue each format's pattern for slots 4-5:
 
 | Format | Cover | Section 1 | Section 2 | Section 3 |
 |---|---|---|---|---|
@@ -85,7 +85,7 @@ def allocate(outline, format_id, image_count=6):
     ]
     
     # Pick image_count-1 section H2s based on format
-    section_h2s = pick_section_h2s_for_format(outline.sections, format_id, n=3)
+    section_h2s = pick_section_h2s_for_format(outline.sections, format_id, n=image_count - 1)
     for i, h2 in enumerate(section_h2s):
         slots.append(Slot(
             slot_id=f"section_{i+1}",

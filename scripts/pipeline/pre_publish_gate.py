@@ -998,6 +998,11 @@ MANDATORY_GATES = [
     ("cta_module", check_cta_module),
     ("paa_alignment", check_paa_alignment),
     ("locale_spelling", check_locale_spelling),
+    # FAIL only when review.json is older than draft.md (unreviewed content);
+    # its WARN outcomes stay non-blocking here — only status=="FAIL" flips
+    # all_pass. Was in ADVISORY_GATES until 2026-08-17, where run_gate() never
+    # read its status and the 38418 replay (edit after review) still exited 0.
+    ("gate_freshness", check_gate_freshness),
 ]
 
 ADVISORY_GATES = [
@@ -1005,7 +1010,6 @@ ADVISORY_GATES = [
     ("schema", check_schema),
     ("section_completeness", check_section_completeness),
     ("keyword_density", check_keyword_density),
-    ("gate_freshness", check_gate_freshness),
 ]
 
 

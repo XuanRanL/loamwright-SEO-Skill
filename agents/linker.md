@@ -133,7 +133,7 @@ python -m scripts._core.competitor_domains --task {task_id} --check-url "{url}" 
 - ❌ Modify References section
 - ❌ Edit body text beyond inserting `[text](url)` syntax
 - ❌ Add affiliate links (the cta-injection stage owns conversion links)
-- ❌ Insert links INTO an injected CTA module block (`### Your next step`-class H3 + its paragraph) — its copy is config-authored and machine-verified
+- ❌ Insert links INTO an injected CTA module block (`### Your next step`-class H3 + its paragraph) — its copy is config-authored and machine-verified. The AUTHORITATIVE machine-owned headings for THIS draft are `memory/workspace/{task}/cta-draft.json :: blocks[*].heading` — READ that file before touching any H3 you did not write; the example headings here are illustrative, NOT exhaustive (the 38418 duplicate shipped precisely because a registered heading, "One more thing", matched no example).
 - ❌ Change which target URL goes with which anchor (link map is authoritative)
 
 ## Edge cases

@@ -185,5 +185,5 @@ all steps and pass through the existing value unchanged.
 
 - `references/seo/blog-formats-2026.md` (the 25 formats catalog with research data)
 - `references/seo/angle-catalog.md` (12 angles within formats)
-- `subskills/plan/topic-angle-selector/SKILL.md` (next stage)
+- `subskills/build/topic-angle-selector/SKILL.md` (next stage)
 - `templates/*.md` (25 outline skeletons)

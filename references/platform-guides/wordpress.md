@@ -69,13 +69,12 @@ Step 5: Inject schema + Yoast meta
         - meta._yoast_wpseo_focuskw
         - meta._schema_jsonld (requires MU-plugin OR custom field)
 
-Step 6: Transition to publish
-        - PATCH /wp-json/wp/v2/posts/{id}
-        - status: "publish"
-
-Step 7: Ping indexers
-        - IndexNow (Bing, ChatGPT-via-Bing, Yandex, Naver)
-        - GSC URL Inspection (optional)
+Step 6+7: Flip draft → live + re-verify + notify indexers
+        - ONE executor owns the sequence (v3.42.16):
+          python -m scripts.wordpress.flip_post_live {slug} --workspace {task_id} --json
+        - It PATCHes status → publish, re-verifies the live URL, then re-runs
+          the indexing notifier (IndexNow: Bing, ChatGPT-via-Bing, Yandex, Naver).
+        - Exit 2 = live but indexing NOT submitted. Never hand-PATCH the status.
 ```
 
 ## Common pitfalls

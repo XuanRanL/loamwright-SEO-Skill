@@ -172,5 +172,5 @@ Hard cap: 4 rounds total. Round 5 → halt + return best-of-N + repair-report.
   live stages vs retired pointers)
 - `subskills/cross-cutting/repair-orchestrator/SKILL.md`
 - `agents/reviewer.md`
-- `agents/seo-auditor.md`
+- `agents/seo-auditor.md` (tombstoned 2026-08-12 — scoring lives in the deterministic quality-gates scripts)
 - `agents/geo-auditor.md`

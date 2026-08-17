@@ -40,21 +40,34 @@ no publish-result.json).
 ## The draft→publish flip (the case the operator actually hits)
 
 Rule 5a means the pipeline's terminal state is a DRAFT, so the in-pipeline run
-of this stage records `skipped_draft`. **After the operator confirms and the
-post is PATCHed live, re-run the executor above by hand** — it is idempotent and
-this re-run is the one that actually submits. The publish-confirmation flows in
-`skills/weekly-digest/SKILL.md` (Step 9) and `skills/phase-publish/SKILL.md`
-include this step.
+of this stage records `skipped_draft`. **The post-flip submitting run is owned by
+`python -m scripts.wordpress.flip_post_live {slug} --workspace {task_id} --json`**
+(v3.42.16) — it PATCHes the status, re-verifies the live URL, and re-runs this
+stage's executor in one sequence, exiting 2 if the indexing re-run did not
+submit. Do not re-run the executor by hand as a substitute for the flip
+executor: the hand-run path is what left flips unverified. The
+publish-confirmation flows in `skills/weekly-digest/SKILL.md`,
+`skills/phase-publish/SKILL.md`, and `skills/seo-blog/SKILL.md` all invoke
+flip_post_live.
 
 ## Credentials
 
-`~/.xuanran-seo/credentials/bing-indexnow.json`:
+**Per-project first (2026-08-17 — the credential binds to ONE host and this is a
+~13-site fleet):** `~/.xuanran-seo/credentials/bing-indexnow/{slug}.json`, one per
+site, same shape as below. The global `bing-indexnow.json` remains as a
+single-site fallback only — with just the global file, 12 of 13 sites would 422
+(URL host ≠ credential host); `indexnow_submit` now refuses a host-mismatched
+payload loudly before the network call.
+
+Shape (both levels):
 `{ "key": "<32-hex>", "key_location": "https://{host}/{key}.txt", "host": "example.com" }`
 (or `BING_INDEXNOW_KEY` / `BING_INDEXNOW_KEY_LOCATION` / `BING_INDEXNOW_HOST`).
-The key file must be hosted on the domain. Missing credentials record
-`no_credentials` — visible, non-blocking. **As of 2026-08-12 no key is
+The key file must be hosted on each domain (the same key VALUE may be reused
+across hosts — each host serves its own `{key}.txt`). Missing credentials record
+`no_credentials` — visible, non-blocking. **As of 2026-08-17 no key is
 configured on this machine**; every run records `no_credentials` until one is
-minted (https://www.bing.com/indexnow) and the key file uploaded per site.
+minted (https://www.bing.com/indexnow), the key file uploaded per site, and the
+per-slug credential files written.
 
 One IndexNow ping reaches: Microsoft Bing, ChatGPT-via-Bing, Yandex, Naver,
 Seznam, Yep.

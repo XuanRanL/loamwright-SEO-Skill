@@ -58,6 +58,13 @@ FORMAT_PARAMS: dict[str, dict] = {
     "product-review": {"words": 4500, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": image_policy.DEFAULT_IMAGE_COUNT},
     "shortlist-validation": {"words": 2200, "research_calls_advanced": 6, "research_extracts": 9, "image_count": 3},
     "faq-knowledge":  {"words": 3000, "research_calls_advanced": 4, "research_extracts": 6,  "image_count": 2},
+    # Provisional row (2026-08-17): template targets 5500-6500w (templates/
+    # buyers-guide.md), research load listicle-class. The 2026-08-17 project-hotel
+    # batch ran ~$7.33/article ACTUAL vs $1.66 default-profile estimate — 40% of
+    # the gap was the missing row (4500w baseline), the rest repair-round churn
+    # (cured v3.42.16) + the then-unmodeled deep-research call (modeled below).
+    # Recalibrate from ledger rows once task-id attribution (v3.42.18) has data.
+    "buyers-guide":   {"words": 6000, "research_calls_advanced": 8, "research_extracts": 12, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
     # default fallback
     "default":        {"words": 4500, "research_calls_advanced": 6, "research_extracts": 10, "image_count": image_policy.DEFAULT_IMAGE_COUNT},
 }
@@ -76,6 +83,10 @@ VALID_FORMATS: set[str] = format_registry.load_valid_formats(source="cost_estima
 # Calibrated: drafting 100w needs ~500 prompt tokens (refs+context+brief) + ~140 output tokens
 TOKENS_PER_100W_DRAFT_INPUT  = 500
 TOKENS_PER_100W_DRAFT_OUTPUT = 140
+
+# One mandatory Tavily Deep Research pro call per article (~30 credits ≈ $0.24
+# PAYG; scripts/fetch/tavily_research.py). Flat per-article, not a row field.
+DEEP_RESEARCH_PRO_USD = Decimal("0.24")
 
 # Per-pipeline-stage fixed token consumption (independent of word count)
 PIPELINE_STAGES: list[tuple[str, int, int]] = [
@@ -153,10 +164,14 @@ def estimate_article(
         tavily_extract_urls=params["research_extracts"],
         tavily_extract_advanced=True,
     )
-    out.research_tavily_usd = tavily_est.estimated_usd
+    # Mandatory Stage-0 Deep Research pro call (~30 credits ≈ $0.24 at PAYG,
+    # scripts/fetch/tavily_research.py) — appeared in NO row until 2026-08-17;
+    # every format runs exactly one, so it is a flat term, not a row field.
+    out.research_tavily_usd = tavily_est.estimated_usd + DEEP_RESEARCH_PRO_USD
     out.breakdown_lines.append(
         f"  Research (Tavily ×{params['research_calls_advanced']} adv search + "
-        f"{params['research_extracts']} extracts): ${out.research_tavily_usd}"
+        f"{params['research_extracts']} extracts + 1 deep-research pro): "
+        f"${out.research_tavily_usd}"
     )
 
     # 2. Drafting (parallel section dispatch — same total tokens, just parallelized)
@@ -263,7 +278,10 @@ def main() -> int:
     ap.add_argument("--format", default="listicle",
                     choices=sorted(VALID_FORMATS))
     ap.add_argument("--words", type=int)
-    ap.add_argument("--images", type=int, default=4)
+    # default=None → estimate_article falls back to the FORMAT row (which
+    # imports image_policy.DEFAULT_IMAGE_COUNT). A literal argparse default
+    # here silently overrode every pinned row (found 2026-08-17, Rule 10).
+    ap.add_argument("--images", type=int, default=None)
     ap.add_argument("--image-quality", default="high",
                     choices=["low", "medium", "high"])
     ap.add_argument("--batch", action="store_true", help="Use Batch API for images (50% off)")

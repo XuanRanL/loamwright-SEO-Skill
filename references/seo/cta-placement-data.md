@@ -73,7 +73,7 @@ v5.0 without existing. It now backs the deterministic executor
 - Executor: `scripts/optimize/cta_injector.py`
 - Stage: `cta-injection` in `scripts/pipeline/orchestrator.py` (mandatory; after
   visual-designer, before render-lint; `_PASS_FLAG_REQUIRED` + `_FRESHNESS_VS_DRAFT`)
-- Checklist: `scripts/pipeline/pipeline_checklist.py :: MANDATORY_STAGES`
+- Checklist: `scripts/pipeline/pipeline_checklist.py :: MANDATORY_STAGES` (diagnostic CLI only — derived from the Stage table, enforces nothing; see its honesty banner)
 - Runner gate: `scripts/pipeline/run_pipeline.py :: _GATE_STAGES`
 - Pre-publish gate: `scripts/pipeline/pre_publish_gate.py :: check_cta_module` (re-scans
   the CURRENT draft — catches repair loops stripping the block)

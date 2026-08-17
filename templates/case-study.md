@@ -149,6 +149,7 @@ Restate the result + the most important lesson.
 - Section 1: challenge / "before" state photo or chart
 - Section 2: implementation moment / behind-the-scenes
 - Section 3: result / "after" state visualization
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls
 

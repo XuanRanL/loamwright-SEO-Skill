@@ -1,12 +1,12 @@
 ---
 name: openai-image-generator
-description: Generate all 4 article images via the unified openai_image_pipeline (provider-aware: Vertex Gemini 3 Pro Image 4K primary + official OpenAI fallback, realtime-forced). Single-call pipeline replaces the prior submit→wait→download multi-stage pattern. Stage 27c+27d combined.
+description: Generate the article's images (count from image-prompts.json — brief.image_count via scripts/_core/image_policy.py, default 6, max 8) via the unified openai_image_pipeline (provider-aware: Vertex Gemini 3 Pro Image 4K primary + official OpenAI fallback, realtime-forced). Single-call pipeline replaces the prior submit→wait→download multi-stage pattern. Stage 27c+27d combined.
 allowed-tools: [Read, Write, Bash]
 ---
 
 # OpenAI Image Generator
 
-Generates all 4 article images using the canonical `openai_image_pipeline.py` script.
+Generates every image slot in image-prompts.json (the count comes from brief.image_count via scripts/_core/image_policy.py — default 6, max 8) using the canonical `openai_image_pipeline.py` script.
 This skill consolidates what used to be Stage 27c (submit) + Stage 27d (poll) into a
 single call.
 

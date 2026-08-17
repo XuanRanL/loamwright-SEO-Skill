@@ -1,6 +1,6 @@
 # CITE Framework — 40-Item AI Citation Worthiness Rubric
 
-> Used by `subskills/optimize/quality-gate-cite/` and `scripts/validate/cite_scorer.py`. 
+> Used by the `quality-gates` stage (`scripts/validate/run_quality_gates.py` → `scripts/validate/cite_scorer.py`); no quality-gate-cite subskill dir exists. 
 > Borrowed from seo-geo-claude-skills with v3.2 refinements.
 
 CITE = **C**itation worthiness + **I**dentity clarity + **T**rust signals + **E**minence

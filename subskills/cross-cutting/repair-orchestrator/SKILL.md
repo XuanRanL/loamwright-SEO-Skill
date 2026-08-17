@@ -178,6 +178,6 @@ If exhausted (4 rounds done, still failing):
 ## See also
 
 - `schemas/quality.schema.json` (input format)
-- `agents/editor-in-chief.md` (reverse-callback for Level 2)
+- `agents/editor-in-chief.md` (tombstoned 2026-08-12 — Level 2 dispatches agents/writer.md below)
 - `agents/writer.md` (Level 2 dispatched agent)
 - `subskills/build/section-drafter/SKILL.md` (Level 3/4 dispatched skill)

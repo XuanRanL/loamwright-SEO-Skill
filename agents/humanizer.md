@@ -168,7 +168,7 @@ After each iteration, update:
   `### Where we can help` / `### Work with us` / `### Ready when you are` /
   `### Talk to the factory` H3 plus its single paragraph (v3.34: config-authored by
   business-context.cta, machine-verified by the cta_module pre-publish gate; a
-  stripped/reworded block hard-fails the gate)
+  stripped/reworded block hard-fails the gate). The AUTHORITATIVE machine-owned headings for THIS draft are `memory/workspace/{task}/cta-draft.json :: blocks[*].heading` — READ that file before touching any H3 you did not write; the example headings here are illustrative, NOT exhaustive (the 38418 duplicate shipped precisely because a registered heading, "One more thing", matched no example).
 - ❌ Modify frontmatter except `Stage` field
 
 ## Common mistakes

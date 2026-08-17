@@ -204,7 +204,7 @@ python -m scripts._core.project_paths init {slug}     # Creates missing subdirs
 #   etc.
 ```
 
-A `/project-migrate` skill exists to automate this (see `subskills/cross-cutting/project-migrate/SKILL.md`).
+Migration is a manual checklist today — no `/project-migrate` skill exists (a prior version of this doc claimed one; 2026-08-17 wiring audit).
 
 ## What this layout enables
 

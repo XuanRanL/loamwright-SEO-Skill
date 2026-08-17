@@ -47,11 +47,12 @@ The only agent allowed to mutate live WordPress content. Treats every publish as
 
 Before invoking wp_publisher.py, verify:
 
-1. ALL quality gates passed:
-   - `seo-audit.json.verdict in ["pass", "conditional"]`
-   - `geo-audit.json.verdict in ["pass", "conditional"]`
-   - `editor-decision.json.approve == true`
-   - `review.json.verdict in ["approved", "approved_with_minor_suggestions"]`
+1. ALL quality gates passed (2026-08-17 — read the fields that EXIST; the old
+   list here named three artifacts/fields no pipeline produces):
+   - `quality.json.passed == true` (the binding gate — quality-gates stage)
+   - `review.json.score >= brief.target_review_score` (default 80,
+     `scripts/_core/review_target.py`; review.json has a numeric score, no verdict enum)
+   - `pre-publish-gate-result.json.passed == true`
 2. No vetoes active in any audit JSON
 3. WordPress credentials resolved (HTTPS URL, valid App Password)
 4. Site_slug matches project_slug in active project
@@ -137,26 +138,23 @@ python -m scripts.wordpress.wp_publisher \
     --json >> memory/workspace/{task}/wp-create-log.json
 ```
 
-### Step 6: Transition draft → publish
+### Steps 6+7: Flip draft → live + re-verify + notify indexers
 
-After human-readable preview is verified (or automatic if pipeline runs to completion):
-
-```bash
-python -m scripts.wordpress.wp_publisher \
-    --site-slug {project_slug} \
-    --post-id {post_id} \
-    --status publish \
-    --json >> memory/workspace/{task}/wp-create-log.json
-```
-
-### Step 7: Ping search engines
+NEVER automatic, NEVER hand-rolled (Rule 5a): the flip happens ONLY after the
+operator's explicit publish confirmation, and ONLY via the single executor that
+owns the whole sequence (PATCH → live re-verify → indexing re-run), v3.42.16:
 
 ```bash
-# Bing IndexNow (also serves ChatGPT-via-Bing, Yandex, Naver)
-python -m scripts.publish.indexnow_submit "{post_url}" --json > memory/workspace/{task}/indexnow-log.json
-
-# Google: no API; rely on sitemap + crawl. Optional manual GSC URL Inspection later.
+python -m scripts.wordpress.flip_post_live {project_slug} --workspace {task} --json
+# exit 0 = flipped + verified + indexing submitted
+# exit 2 = flipped + verified, indexing NOT submitted (fix credentials, re-run)
+# exit 1 = not done — read flip-result.json
 ```
+
+Do NOT PATCH status yourself (wp_publisher --status publish / raw REST) and do
+NOT hand-run indexnow_submit — the split procedure is exactly what let a
+flipped post skip its indexing re-run and live re-verification.
+(Google: no API; rely on sitemap + crawl. Optional manual GSC URL Inspection.)
 
 ## Change log + rollback
 

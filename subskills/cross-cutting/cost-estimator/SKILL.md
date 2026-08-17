@@ -41,7 +41,7 @@ python -m scripts._core.cost_estimator --format pillar-page --json
 ```
 ━━━ /article cost estimate ━━━━━━━━━━━━━━━━━━━━━━━━━
   Format: listicle (target 6000 words)
-  Images: 4 × high-quality 1024² (batch)
+  Images: 6 × high-quality 1024² (batch)   ← count = image_policy.DEFAULT_IMAGE_COUNT (format rows may set fewer)
   Drafter / pipeline model: claude-opus-4-7 / claude-opus-4-7
   Cache hit rate assumed: 30%
 

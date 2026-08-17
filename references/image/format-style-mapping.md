@@ -34,6 +34,7 @@
 - Section image 1: primary or secondary
 - Section image 2: secondary (variation)
 - Section image 3: secondary or primary (back to primary if needed)
+- Section images 4-5 (present at the default image_count of 6 — scripts/_core/image_policy.py): keep alternating secondary/primary; never two identical styles adjacent
 
 ## Industry adjustments
 

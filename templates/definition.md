@@ -135,6 +135,7 @@ APA 7. Wikipedia-style: ≥3 academic OR authoritative sources. ≤10 entries.
 - Section 1: diagram of how it works
 - Section 2: 3-up examples panel
 - Section 3: misconception illustration OR types diagram
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls
 

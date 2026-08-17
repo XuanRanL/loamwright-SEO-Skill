@@ -1,5 +1,130 @@
 # Changelog
 
+## [3.42.18] - 2026-08-17 (the audit of the audits: v3.42.16/17 verified, and the seams THEY missed cured)
+
+A four-agent deep audit of the two same-day releases (plus a fresh wiring sweep and the
+open-minors backlog). Verdict on the releases themselves: v3.42.16's fixes 6/8 correct,
+v3.42.17's code spine correct — but both had classic Rule-10/11 misses at their own seams,
+two of them functional. Every fix below shipped with a regression test driven RED on the
+unfixed code where feasible (stash-watched for the instruction-layer ones).
+
+### Fixed — the two v3.42.16 fixes that did not actually gate
+
+- **The freshness FAIL lived where FAIL cannot block.** v3.42.16 made
+  `check_gate_freshness` return FAIL on review.json older than draft.md — but registered
+  it in `ADVISORY_GATES`, whose loop never reads `status`; the 38418 replay (edit after
+  review → publish) still exited 0. Moved to `MANDATORY_GATES` (its WARNs stay
+  non-blocking — only FAIL flips `all_pass`); seam tests drive `run_gate()` itself, plus a
+  registration pin. The orchestrator comment that still described LLM staleness as "a
+  pre_publish_gate WARN" is corrected (Rule 11).
+- **verify_post check 30 could not fire on most real CTA copy.** Its needle came from the
+  RAW `cta-draft.json` text, but the page carries `sanitize_copy()` output (ASCII ' → ',
+  em-dash → ", ") — any copy with an apostrophe in its first 160 chars made the duplicate
+  check pass over a live duplicate (the fixture was apostrophe-free, so the suite couldn't
+  see it — Rule 14's exact shape). Both sides now fold through `_canon_cta_text()`
+  (quote-fold + the sanitize em-dash rule), immune to WHICH side transformed
+  (wptexturize included); a pin test ties the fold to production `sanitize_copy`.
+
+### Fixed — v3.42.17's fan-out gaps (and the meta-gap that hid them)
+
+- **`outline.schema.json` still capped `expected_image_count` at 4** — the post-tool-use
+  validate hook exits 2 = BLOCK on outline writes, so the next default-count article
+  following the updated SKILL example got its outline HARD-BLOCKED ("6 is greater than
+  the maximum of 4"). Now 8, pinned both-sides to `image_policy.MAX_IMAGE_COUNT`.
+- **The outline-architect — the stage that DECIDES the slots — never learned the count.**
+  Its dispatch_prompt now carries `{image_count}`/`{inline_image_count}` (pin extended);
+  its SKILL's half-edited worked example ("image_count: 6 means exactly **3** sections")
+  is corrected to **5** and states the omitted-field default resolves via image_policy.
+- **`cost_estimator --images default=4` silently overrode every pinned format row**
+  (Rule 10: the pin tested `FORMAT_PARAMS`, the CLI seam defeated it one level up).
+  Default is now None → format row wins; seam tests drive `main()`.
+- **The retired 4-image contract was never registered** in
+  `references/retired-contracts.json`, so the Rule-11 executor was structurally blind to
+  every leftover. Registered (with the geo-verdict retirement below), then cured the nine
+  live doc layers the manual sweep found: image-prompt-designer "All 4 …" bullets,
+  openai-image-generator's frontmatter/description, cost-estimator SKILL sample, style
+  purposes general.md, seo-checklist I2, the seven format templates' slot lists (now
+  state the slots-4-5 continuation), format-style-mapping, image-slot-allocator (`n=3` →
+  `n=image_count-1`).
+
+### Fixed — Rule-11 fan-out misses from v3.42.16's own features
+
+- **`agents/publisher.md` still instructed a manual `--status publish` flip + hand-run
+  indexnow** ("or automatic if pipeline runs to completion", contradicting Rule 5a), and
+  its preflight read three artifacts/fields no pipeline produces (`seo-audit.json.verdict`,
+  `editor-decision.json.approve`, `review.json.verdict` enum). Steps 6+7 now invoke
+  `flip_post_live` with its exit contract; the preflight reads `quality.json.passed`,
+  `review.json.score` vs the shared target, and the pre-publish gate. Same cure in
+  `subskills/publish/indexing-notifier/SKILL.md` (the "re-run by hand" paragraph) and
+  `references/platform-guides/wordpress.md` steps 6/7.
+- **The reviewer got the cta-draft.json heading guard; the five agents that can EDIT
+  didn't.** humanizer / visual-designer / geo-auditor / linker / writer each identified
+  machine-owned CTA blocks by a fixed example-heading list — "One more thing" (the actual
+  38418 heading) matched no example. All five now name
+  `cta-draft.json :: blocks[*].heading` as authoritative.
+- Leftover reviewer-target spellings: second-opinion's "target_score=95+" scenario now
+  reads "operator explicitly raises above the default 80".
+
+### Fixed — the open-minors backlog from the 2026-08-17 batch audit (root cures)
+
+- **Researcher task_id attribution leak**: `--task-id {task_id}` added to EVERY
+  tavily_search/tavily_extract/serpapi_query example across the three layers the
+  researcher copies from (orchestrator dispatch_prompts, agents/researcher.md,
+  keyword-research SKILL) + an attribution mandate; new Rule-14 executor
+  `tests/test_research_task_id_attribution.py` greps all three (stash-watched RED).
+  Null rows were poisoning per-article actuals — the load-bearing input for cost
+  calibration.
+- **Batch index `total_actual_cost_usd` stayed 0.00 forever** while `status()` recomputed
+  the truth under the same key name: `_save_batch()` (the single write choke point) now
+  recomputes from entries; seam test reloads index.json from disk (RED-watched).
+- **`geo-audit.json::verdict` retired** (read by NOTHING; a task rode through on
+  "conditional" no reader ever saw). The binding verdict is `quality.json::passed`
+  (quality-gates re-runs both scorers post-edit — gating the stale pre-edit duplicate
+  would recreate Rule-12 twin-gate drift). Dispatch_prompt ↔ agent template now mandate
+  the SAME core (`vetoes_triggered[]`/`cap_decision` — they disagreed field-by-field, and
+  real artifacts show every subagent inventing a different union); registered in
+  retired-contracts.
+- **LLM-fabricated timestamps stopped at the source**: cta-writer's
+  `"generated_at": "<ISO8601>"` placeholders and geo-auditor's `audit_at` removed — an
+  agent has no clock, and a round-number timestamp post-dating mtime corrupts forensics;
+  a fabricated time is worse than absent (deterministic writers still stamp real ones).
+- **Ad-hoc research.json assembly banned where the researcher reads**: researcher.md
+  Common-mistakes + dispatch_prompt now state Write-tool-only (a Bash-side script write
+  bypasses the write-time schema hook — exactly how `build_research_json.py` shipped).
+- **Cost model under-estimate (the $21.98-actual vs $4.98-estimated batch)**: calibrated
+  `buyers-guide` row (6000w, listicle-class research), the mandatory Stage-0 Deep
+  Research pro call modeled as a flat $0.24 term (it appeared in NO row), and the
+  repair-churn component was already cured by v3.42.16's review-target fix.
+- **IndexNow made fleet-safe BEFORE minting**: `get_bing_indexnow(project_slug)` resolves
+  `credentials/bing-indexnow/{slug}.json` first (global file = single-site fallback);
+  `indexnow_submit` refuses a host-mismatched payload loudly pre-network (one global
+  credential on a 13-site fleet = 12 sites' guaranteed 422 — the audit's predicted next
+  failure); `indexing_notify` threads its slug through. Key minting remains the one open
+  infra item.
+
+### Fixed — wiring sweep leftovers (fresh audit, 46/46 stages + 34/34 agents otherwise clean)
+
+- format-selector's next-stage pointer (`plan/` → `build/topic-angle-selector`, dangling
+  since 2026-06-30); phantom `/project-migrate` skill claim; three references pointing at
+  never-existing `quality-gate-*` subskill dirs (→ the quality-gates stage executor);
+  "Stage 27f: image-curator" in phase-publish/seo-blog now carries the REFERENCE-ONLY
+  tombstone caveat its agent file already had; See-also lines to tombstoned
+  seo-auditor/editor-in-chief annotated; AGENTS.md gains the three missing routes
+  (phase-monitor, website-audit, weekly-digest); editor-in-chief's banner no longer
+  instructs removing a cost row that v3.42.16 already removed; cta-placement-data notes
+  pipeline_checklist is a diagnostic, not an enforcement layer.
+- Swept in: the v3.42.17 release left `install/wordpress-mu-plugin/seo-machine-yoast-rest.php`'s
+  version header bump uncommitted in the working tree.
+
+### Checked and deliberately NOT "fixed"
+
+- image_placeholder_check D2/D3 reading legacy `outline.image_slots[]` is documented
+  legacy tolerance, not an inert check: D4/D5 already hold the count/route invariant
+  against image-prompts.json (the slot source of truth). Building a second executor for a
+  held invariant is the thing Rule 14's v3.42.8 addendum warns about.
+- verify_post's ad-hoc floor of 4 images (no-workspace mode) stays: the workspace path is
+  count-adaptive, and raising the floor would false-fail the deliberate 2-image formats.
+
 ## [3.42.17] - 2026-08-17 (default images per article 4 → 6, ceiling → 8, count owned by one module)
 
 Operator decision: raise the per-article image default to 6 (1 cover + 5 section

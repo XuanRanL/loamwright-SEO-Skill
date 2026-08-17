@@ -103,6 +103,7 @@ APA 7, ≤10 entries, all link-resolvable.
 - Section 1: top product (#1, in real use)
 - Section 2: methodology / behind-the-scenes
 - Section 3: comparison shot OR closing roundup
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls (auto-rejected by quality gates)
 

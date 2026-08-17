@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-PLUGIN_VERSION="3.42.17"
+PLUGIN_VERSION="3.42.18"
 PLUGIN_NAME="xuanran-seo-blog-writer"
 
 # Resolve plugin root (2 levels up from this script)

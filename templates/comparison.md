@@ -124,6 +124,7 @@ If user is targeting ChatGPT specifically, ensure these 3 tables exist.
 - Section 1: X in action
 - Section 2: Y in action
 - Section 3: verdict visualization (decision tree or 2×2 matrix)
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls
 

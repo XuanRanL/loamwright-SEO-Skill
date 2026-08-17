@@ -200,7 +200,8 @@ The `quotes_and_stats_bank` provided to you has 4 classes. Use only:
   (business-context.cta.enabled: the mandatory `cta-injection` stage appends the
   styled `.xr-cta-box` module; a prose CTA next to it reads as pressure — v3.35.1
   root cure for the template→writer double-CTA seam), and never hand-author a
-  `### Your next step`-class CTA block anywhere
+  `### Your next step`-class CTA block anywhere. In a REPAIR round (rewriting a
+  section of an already-optimized draft): The AUTHORITATIVE machine-owned headings for THIS draft are `memory/workspace/{task}/cta-draft.json :: blocks[*].heading` — READ that file before touching any H3 you did not write; the example headings are illustrative, NOT exhaustive (the 38418 duplicate shipped precisely because a registered heading, "One more thing", matched no example).
 - ❌ Add affiliate disclosures (the cta-injection stage + publish flow handle disclosure)
 - ❌ Insert images / image placeholders (image-slot-allocator already marked them in outline)
 - ❌ Fact-check (you trust research_brief; flag with `needs_source: true`)

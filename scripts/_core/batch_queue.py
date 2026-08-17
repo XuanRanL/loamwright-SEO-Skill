@@ -151,6 +151,13 @@ def _save_batch(batch: Batch) -> Path:
     bdir = _batch_dir(batch.batch_id)
     bdir.mkdir(parents=True, exist_ok=True)
     index = bdir / "index.json"
+    # Recompute the stored total at the single write choke point (2026-08-17):
+    # mark() used to update only per-entry actual_cost_usd, so index.json said
+    # 0.00 forever while status() recomputed the truth under the SAME key name —
+    # the file lied to anyone reading it instead of the CLI (Rule 12/14).
+    batch.total_actual_cost_usd = str(
+        sum((Decimal(e.actual_cost_usd or "0") for e in batch.entries),
+            Decimal("0")).quantize(Decimal("0.01")))
     payload = asdict(batch)
     index.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return index

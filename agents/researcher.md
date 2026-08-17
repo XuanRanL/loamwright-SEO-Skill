@@ -67,6 +67,14 @@ The scripts already default to the right modes: `tavily_search.py` defaults to
 defaults to `--depth advanced`. You do not need to pass those flags, but passing them
 explicitly is fine.
 
+**Cost attribution (mandatory):** EVERY `tavily_search` / `tavily_extract` /
+`serpapi_query` / `tavily_research` invocation carries `--task-id {task_id}`.
+There is no env fallback — a call without the flag writes a ledger row with
+`task_id: null`, which breaks per-article cost actuals and poisons batch/format
+calibration (2026-08-17 audit: 2 of 3 batch tasks had unattributed research
+spend). The stage-command examples below all include the flag; keep it when you
+adapt them.
+
 **MCP fallback:** Only if a script raises after exhausting all keys (e.g.
 `tavily.search: all 4 attempts failed`), retry that single call via the matching
 `mcp__tavily__tavily_search` / `mcp__tavily__tavily_research` / `mcp__tavily__tavily_extract`
@@ -131,21 +139,21 @@ individual searches cannot replicate. Every article MUST have one pro research c
 
 **STAGES 1-5 (targeted searches — advanced depth is the script default):**
 ```
-1. python -m scripts.fetch.tavily_search "{primary_keyword}" --depth advanced --max 10 --json
+1. python -m scripts.fetch.tavily_search "{primary_keyword}" --depth advanced --max 10 --task-id {task_id} --json
    → top-10 SERP for primary
-2. python -m scripts.fetch.tavily_search "{primary_keyword} 2025 2026" --depth advanced --max 10 --time-range year --json
+2. python -m scripts.fetch.tavily_search "{primary_keyword} 2025 2026" --depth advanced --max 10 --time-range year --task-id {task_id} --json
    → fresh content (last 12 months)
-3. python -m scripts.fetch.tavily_search "{primary_keyword} FAQ frequently asked questions" --depth advanced --max 10 --json
+3. python -m scripts.fetch.tavily_search "{primary_keyword} FAQ frequently asked questions" --depth advanced --max 10 --task-id {task_id} --json
    → PAA extraction signal
-4. python -m scripts.fetch.tavily_search "{primary_keyword} {secondary_keyword_1} research study data" --depth advanced --max 5 --json
+4. python -m scripts.fetch.tavily_search "{primary_keyword} {secondary_keyword_1} research study data" --depth advanced --max 5 --task-id {task_id} --json
    → academic/data sources
-5. python -m scripts.fetch.tavily_search "{primary_keyword} vs alternatives comparison review" --depth advanced --max 5 --json
+5. python -m scripts.fetch.tavily_search "{primary_keyword} vs alternatives comparison review" --depth advanced --max 5 --task-id {task_id} --json
    → competitor content angles
 ```
 
 **STAGES 6-8 (extraction + academic):**
 ```
-6. python -m scripts.fetch.tavily_extract <url1> <url2> <url3> <url4> <url5> --depth advanced --json
+6. python -m scripts.fetch.tavily_extract <url1> <url2> <url3> <url4> <url5> --depth advanced --task-id {task_id} --json
    → competitor content + headings (top-5 URLs from stages 1-2)
 7. python -m scripts.fetch.crossref_lookup "{topic} {industry}" --rows 5 --apa
    → academic angle
@@ -176,9 +184,9 @@ wrapper (free 250 searches/mo per account, round-robin across the pool exactly l
 `python -m scripts._core.serpapi_pool --status` shows remaining quota). Degrade gracefully:
 if no SerpApi key is configured the call errors → skip and rely on Tavily.
 ```
-10a. python -m scripts.fetch.serpapi_query --engine google --q "{primary_keyword}" --gl {country} --hl {lang} --json
+10a. python -m scripts.fetch.serpapi_query --engine google --q "{primary_keyword}" --gl {country} --hl {lang} --task-id {task_id} --json
      → organic_results (REAL positions), answer_box, related_questions (true PAA), related_searches, ai_overview
-10b. python -m scripts.fetch.serpapi_query --engine google_autocomplete --q "{primary_keyword}" --json
+10b. python -m scripts.fetch.serpapi_query --engine google_autocomplete --q "{primary_keyword}" --task-id {task_id} --json
      → keyword-expansion suggestions straight from Google
 10c. (optional) --engine ai_overview --q "{primary_keyword}"  → is Google AIO triggered? capture its
      cited sources (this convenience engine reads AIO inline from google + auto-follows a page_token)
@@ -216,7 +224,7 @@ to total article cost.
 ```
 1. For each claim {id, text, hint_query}:
    a. scripts/fetch/crossref_lookup.py "{hint_query}" --rows 5
-   b. If no Crossref hit: scripts/fetch/tavily_search.py "{hint_query}" --depth advanced
+   b. If no Crossref hit: scripts/fetch/tavily_search.py "{hint_query}" --depth advanced --task-id {task_id}
    c. scripts/validate/link_resolver.py {candidate_urls}  ← HEAD check
    d. Pick highest-confidence resolvable source
 2. Save → memory/workspace/{task}/research/fact-check/{claim_id}.json
@@ -328,3 +336,10 @@ fields mid-batch). Full reasoning + the canonical safe pattern: **`references/or
 - ❌ Save raw HTML (use parse_html.py to extract structured data first)
 - ❌ Fetch the same URL twice (use research-cache; 72h TTL)
 - ❌ Make a claim "verified" because Tavily returned a snippet — must HEAD-check the URL
+- ❌ Run a research script without `--task-id {task_id}` (ledger row loses its article; batch actuals under-count)
+- ❌ Author helper scripts (`*.py`) in the workspace to assemble `research.json` — write
+  the JSON with the **Write tool** (hook-validated against the schema) and finish with
+  `python -m scripts.validate.research_contract --workspace {task_id} --fix --json`.
+  A Bash-side write bypasses the write-time schema gate entirely (the 2026-08-17 batch
+  shipped an ad-hoc `build_research_json.py` that dodged validation), and stray workspace
+  scripts get swept into the plugin cache by `/plugin update` (directory copy).

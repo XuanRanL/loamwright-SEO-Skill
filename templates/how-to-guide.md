@@ -110,6 +110,7 @@ DO NOT make `HowTo` the primary @type (will trigger T09 veto).
 - Section 1: Step 1 in progress (4:3)
 - Section 2: middle step (most visual) (4:3)
 - Section 3: result / final state (4:3)
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls
 

@@ -124,6 +124,7 @@ APA 7, ≤10 entries.
 - Section 1: design / build detail (4:3)
 - Section 2: in-use mid-test (4:3)
 - Section 3: comparison or final result (4:3)
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 ## Common pitfalls
 - ❌ All-positive review (looks fake; bad for trust)

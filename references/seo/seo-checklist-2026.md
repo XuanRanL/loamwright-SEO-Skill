@@ -1,6 +1,6 @@
 # 2026 SEO + GEO Publishing Checklist
 
-> The complete pre-publish gate. All items must pass for green-light. Per `subskills/optimize/quality-gate-*` skills.
+> The complete pre-publish gate. All items must pass for green-light. Enforced by the `quality-gates` stage (`scripts/validate/run_quality_gates.py`) — there are no per-gate subskill dirs.
 
 ---
 
@@ -99,7 +99,7 @@
 | # | Check | Required | Notes |
 |---|---|---|---|
 | I1 | Cover image 16:9 (1536×1024 or 1792×1024) | yes | (image-slot-allocator) |
-| I2 | 3 section images at planned slots | yes | (per format) |
+| I2 | `image_count − 1` section images at planned slots (default 5; image_policy) | yes | (per format) |
 | I3 | All images have alt text ≤125 chars | yes | image-curator |
 | I4 | SEO filenames (kebab-case + keyword) | yes | image_seo_filename.py |
 | I5 | WebP format with PNG fallback | yes | webp_converter.py |

@@ -25,7 +25,7 @@ Used when an article passed all quality gates but feels suspicious.
 Open-ended Q&A: "Is this strategy / decision right?"
 
 ## When to use
-- Pre-publish (with target_score=95+): supplemental review
+- Pre-publish (when the operator explicitly raises brief.target_review_score above the default 80 — scripts/_core/review_target.py): supplemental review
 - Repair Round 5 (from-scratch): get challenge view before accepting
 - /init Stage 11 synthesis: consult on whether the project profile is accurate
 - /article when target_surfaces includes AI engines (use the actual engine to judge)

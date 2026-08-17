@@ -42,6 +42,16 @@ This file routes user intent to skills, **host-agnostic**. Any AI host (Claude C
 **Triggers**: "publish", "send to WordPress", "/publish"
 → Load skill: `skills/phase-publish/SKILL.md`
 
+**Triggers**: "/perf", "/rank-check", "/drift", "/ai-visibility", "rank tracking", "post-publish checkup"
+→ Load skill: `skills/phase-monitor/SKILL.md`
+
+**Triggers**: "website audit", "audit my site", "full SEO check", "site health", URL + audit intent
+→ Load skill: `skills/website-audit/SKILL.md`
+   (standalone crawler + specialist agents — NOT the per-draft `/audit` phase-optimize gate above)
+
+**Triggers**: "/weekly", "industry weekly digest", "weekly roundup", "行业周报"
+→ Load skill: `skills/weekly-digest/SKILL.md`
+
 ### Specialty entries
 
 **Triggers**: "featured snippet", "position zero", "抢 0 号位"

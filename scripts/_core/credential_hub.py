@@ -541,28 +541,40 @@ def get_wordpress_creds(site_slug: str) -> WPCreds:
     )
 
 
-def get_bing_indexnow() -> BingIndexNow:
+def get_bing_indexnow(project_slug: str | None = None) -> BingIndexNow:
     """Resolve Bing IndexNow key + key location URL.
 
     The key is the value (32-char hex). The key location is a URL
     where the key file is hosted on your domain. Both must be configured.
 
-    Reads ~/.xuanran-seo/credentials/bing-indexnow.json:
+    PER-PROJECT FIRST (2026-08-17): the credential binds to ONE host, but the
+    fleet is ~13 sites — a single global file can only ever fit one of them
+    (every other site's submission 422s: URL host ≠ credential host). When a
+    project_slug is given, ~/.xuanran-seo/credentials/bing-indexnow/{slug}.json
+    wins; the global bing-indexnow.json remains as the single-site fallback.
+    The same key VALUE may be reused across hosts — each host just serves its
+    own {key}.txt — so minting once and stamping 13 per-slug files is fine.
+
+    File shape (both levels):
         { "key": "abcd...", "key_location": "https://example.com/abcd.txt", "host": "example.com" }
 
-    Or env vars: BING_INDEXNOW_KEY, BING_INDEXNOW_KEY_LOCATION, BING_INDEXNOW_HOST
+    Env fallback: BING_INDEXNOW_KEY, BING_INDEXNOW_KEY_LOCATION, BING_INDEXNOW_HOST
     """
-    cfg_file = CRED_DIR / "bing-indexnow.json"
-    if cfg_file.exists():
-        try:
-            data = json.loads(cfg_file.read_text(encoding="utf-8"))
-            return BingIndexNow(
-                key=data["key"],
-                key_location=data["key_location"],
-                host=data["host"],
-            )
-        except (json.JSONDecodeError, KeyError) as e:
-            raise CredentialFormatError(f"Invalid bing-indexnow.json: {e}") from e
+    candidates = []
+    if project_slug:
+        candidates.append(CRED_DIR / "bing-indexnow" / f"{project_slug}.json")
+    candidates.append(CRED_DIR / "bing-indexnow.json")
+    for cfg_file in candidates:
+        if cfg_file.exists():
+            try:
+                data = json.loads(cfg_file.read_text(encoding="utf-8"))
+                return BingIndexNow(
+                    key=data["key"],
+                    key_location=data["key_location"],
+                    host=data["host"],
+                )
+            except (json.JSONDecodeError, KeyError) as e:
+                raise CredentialFormatError(f"Invalid {cfg_file.name}: {e}") from e
 
     key = os.environ.get("BING_INDEXNOW_KEY", "").strip()
     loc = os.environ.get("BING_INDEXNOW_KEY_LOCATION", "").strip()
@@ -571,8 +583,9 @@ def get_bing_indexnow() -> BingIndexNow:
         return BingIndexNow(key=key, key_location=loc, host=host)
 
     raise CredentialNotFoundError(
-        "Bing IndexNow not configured. Set bing-indexnow.json or "
-        "BING_INDEXNOW_{KEY,KEY_LOCATION,HOST} env vars."
+        "Bing IndexNow not configured. Set credentials/bing-indexnow/{slug}.json "
+        "(per-site, preferred on a multi-site fleet), credentials/bing-indexnow.json "
+        "(single-site), or BING_INDEXNOW_{KEY,KEY_LOCATION,HOST} env vars."
     )
 
 

@@ -119,7 +119,7 @@ def notify(project_slug: str, task_id: str) -> dict[str, Any]:
     try:
         from scripts.publish.indexnow_submit import submit
 
-        sub = submit([link])
+        sub = submit([link], project_slug=project_slug)
     except Exception as exc:
         result["outcome"] = OUTCOME_SUBMIT_FAILED
         result["detail"] = f"{type(exc).__name__}: {exc}"
@@ -133,8 +133,9 @@ def notify(project_slug: str, task_id: str) -> dict[str, Any]:
     # `submit()` collapses its exceptions into a string error field, so type
     # information is gone at this boundary and message matching is the only
     # classifier available (Rule 9's fallback clause). Verified against the real
-    # message credential_hub produces: "Bing IndexNow not configured. Set
-    # bing-indexnow.json or BING_INDEXNOW_… env vars." — the first live run of
+    # message credential_hub produces ("Bing IndexNow not configured. Set
+    # credentials/bing-indexnow/{slug}.json … or BING_INDEXNOW_… env vars.",
+    # pinned by test) — the first live run of
     # this module classified that as submit_failed because it only looked for
     # the word "credential", which the real message does not contain.
     err = str(sub.error or "")

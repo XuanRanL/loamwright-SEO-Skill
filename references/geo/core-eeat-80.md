@@ -1,6 +1,6 @@
 # CORE-EEAT — 80-Item Quality Gate
 
-> Used by `subskills/optimize/quality-gate-core-eeat/` and `scripts/validate/core_eeat_scorer.py`.
+> Used by the `quality-gates` stage (`scripts/validate/run_quality_gates.py` → `scripts/validate/core_eeat_scorer.py`); no quality-gate-core-eeat subskill dir exists.
 > Borrowed from seo-geo-claude-skills with v3.2 refinements.
 
 CORE-EEAT = 8 dimensions × 10 items each = 80 binary scoring items.

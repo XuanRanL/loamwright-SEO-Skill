@@ -142,6 +142,7 @@ Spoke types to link:
 - Section 1 (4:3, 1024×1024): types diagram (infographic style) — appears inline after the relevant H2.
 - Section 2 (4:3, 1024×1024): decision framework visual (table or chart) — inline.
 - Section 3 (4:3, 1024×1024): case-study or trend visual — inline.
+- Slots 4-5 (the default `image_count` 6 → 5 inline slots; `scripts/_core/image_policy.py`): continue the subject pattern above with distinct, non-duplicative scenes for further key sections
 
 Section figures are rendered as Gutenberg `<!-- wp:image -->` blocks with `<figcaption>` populated from the image's caption metadata field. All four media-library fields (title, alt_text, caption, description) MUST be populated at upload time — the publisher reads these from `workspace/{task}/image_metadata.json`.
 

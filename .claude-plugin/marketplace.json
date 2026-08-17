@@ -9,7 +9,7 @@
     {
       "name": "xuanran-seo-blog-writer",
       "description": "Production-grade SEO + GEO content factory + full website audit. Research → write → publish → monitor. 8 skills + 67 subskills, 34 agents, 230+ scripts. Optimized for Google + AI search (ChatGPT/Perplexity/Claude/Gemini) dual front. WordPress auto-publish with gpt-image-2 image generation. Full-site SEO audit with 15 specialist agents.",
-      "version": "3.42.17",
+      "version": "3.42.18",
       "source": "./",
       "author": {
         "name": "Loamwright (沃匠)",
@@ -35,5 +35,5 @@
       ]
     }
   ],
-  "version": "3.42.17"
+  "version": "3.42.18"
 }

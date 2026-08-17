@@ -256,9 +256,9 @@ result -- do not rely on the backstop; write a clean attribution the first time.
 
 ### Step 6: Validate uniqueness across all prompts
 
-- All 4 subjects distinguishable (no duplicates)
-- All 4 alt_text_seeds unique (image-curator will polish further)
-- Primary keyword appears in cover + 0-1 section alt_text_seeds (not all 4)
+- Every slot's subject distinguishable (no duplicates across the set)
+- Every alt_text_seed unique (image-curator will polish further)
+- Primary keyword appears in cover + 0-1 section alt_text_seeds (never in every slot)
 
 ### Step 7: Write image-prompts.json
 

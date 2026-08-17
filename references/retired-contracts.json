@@ -1,39 +1,61 @@
 {
-  "_purpose": "Rule 11 registry. Each entry names a contract that CHANGED, so that any instruction layer still mentioning the old form must also acknowledge the new one. Consumed by scripts/lint/contract_fanout_check.py. Add an entry in the SAME commit that changes a cross-cutting contract — that is the whole point: the registry is how a contract change becomes mechanically enforceable instead of a request that a human remember to grep.",
-  "_how_to_add": "pattern = a distinctive regex for the OLD contract's wording. requires = a regex that any file legitimately mentioning it must ALSO contain (the pointer to the new contract). The rule is deliberately not 'this phrase is banned': legacy names stay correct for internal artifacts, and a lint that fires on correct usage gets muted — which is worse than no lint.",
-  "retired_contracts": [
-    {
-      "id": "style-tokens-v3420",
-      "retired_in": "3.42.0",
-      "date": "2026-08-01",
-      "retired_contract": "Published article HTML carries the literal class '{slug}-pillar' (and the legacy component names), so publish-time verification can grep the live page for it.",
-      "current_contract": "For any project with brand/style-tokens.json (all 13 today), wp_publisher._apply_project_styling rewrites body + CSS at the publish boundary into per-project HMAC tokens: project-charlie-pillar ships as mwxiod-1ymm61. Internal artifacts (draft.md, lints) keep the legacy names. Published names must be RESOLVED, never hand-written.",
-      "cure": "Resolve the published name with `python -m scripts._core.style_tokens --show {slug}`, or let verify_post.py do it. Verifying live HTML for a literal '{slug}-pillar' on a tokenized project is a check that can never pass.",
-      "pattern": "class\\s*=\\s*[\"'\\\\]*[a-z0-9_-]*-pillar|\\.[a-z][a-z0-9_]*-pillar\\b|\\{slug\\}-pillar",
-      "requires": "style_tokens|style-tokens",
-      "note_on_pattern": "Generalized 2026-08-12. It used to be the two literal spellings '{slug}-pillar|project-charlie-pillar', so twelve of thirteen real project wrappers (project-echo-pillar, project-foxtrot-pillar, project-alpha-pillar, ...) did not match and the one rule this executor was built for could not fire. The generalization is anchored on CSS-class USAGE (class=\"x-pillar\", .x-pillar) rather than 'any hyphenated word ending in -pillar', because 'local-state-pillar' is a FORMAT ID and 'has-pillar' / 'no-pillar' / 'spoke-pillar' / 'design-system-pillars' / 'system-pillar' are ordinary prose in this tree. A naive widening flags all of them, and per _how_to_add a lint that fires on correct usage gets muted — worse than no lint. The slug sub-pattern is [a-z][a-z0-9_]* (no hyphen) after a leading dot, which is precise for all 13 single-token project slugs; a hyphenated slug would need it revisited. tests/test_contract_fanout_scope_and_pattern.py pins both the matches and the non-matches against this exact regex."
-    },
-    {
-      "id": "rankmath-updatemeta-route",
-      "retired_in": "3.x",
-      "date": "2026-05-20",
-      "retired_contract": "SEO meta is written via POST /xuanran/v1/rank-math-bridge or POST /rankmath/v1/updateMeta.",
-      "current_contract": "SEO meta goes through POST /wp/v2/posts/{id} with a `meta` body; the MU-plugin registers the rank_math_* keys with a REST schema. The old bridge route 404s on POST, and updateMeta corrupts rank_math_schema_jsonld so the front-end 500s on render.",
-      "cure": "Use POST /wp/v2/posts/{id} with {\"meta\": {\"rank_math_*\": ...}}. Append custom schema to the post body as inline JSON-LD instead of sending it through updateMeta.",
-      "pattern": "rankmath/v1/updateMeta|POST[^\n]{0,40}xuanran/v1/rank-math-bridge",
-      "requires": "wp/v2/(posts|\\{type\\}|\\{post_type\\})",
-      "note_on_scope": "Only POST was retired. GET /xuanran/v1/rank-math-bridge survives and is the canonical bridge_version probe, so the pattern must not match a bare mention of the route.",
-      "note_on_requires": "Broadened 2026-08-12, when the widened scope first reached projects/**. projects/project-alpha/CLAUDE.md states the CURRENT contract correctly — `POST /wp/v2/{type}/{id}` with a meta body, naming updateMeta only to forbid it — but the requires regex demanded the literal 'wp/v2/posts' and flagged it. The endpoint is generic across post types, so the acknowledgement is written generically too; a requires regex that only accepts one spelling of the new contract fires on files that already comply, which is how a lint earns being muted."
-    },
-    {
-      "id": "cta-placement-end-v3415",
-      "retired_in": "3.41.5",
-      "date": "2026-07-21",
-      "retired_contract": "CTA and product modules may be placed at the END of the article body.",
-      "current_contract": "Placement is MID fleet-wide; 'end' is used by nothing, and repairing a legacy article means moving end -> mid first.",
-      "cure": "Use the mid placement. If you find an 'end' placement in a live post, move it before doing anything else to that article.",
-      "pattern": "placement\\s*[:=]\\s*[\"']end[\"']",
-      "requires": "mid"
-    }
-  ]
+ "_purpose": "Rule 11 registry. Each entry names a contract that CHANGED, so that any instruction layer still mentioning the old form must also acknowledge the new one. Consumed by scripts/lint/contract_fanout_check.py. Add an entry in the SAME commit that changes a cross-cutting contract — that is the whole point: the registry is how a contract change becomes mechanically enforceable instead of a request that a human remember to grep.",
+ "_how_to_add": "pattern = a distinctive regex for the OLD contract's wording. requires = a regex that any file legitimately mentioning it must ALSO contain (the pointer to the new contract). The rule is deliberately not 'this phrase is banned': legacy names stay correct for internal artifacts, and a lint that fires on correct usage gets muted — which is worse than no lint.",
+ "retired_contracts": [
+  {
+   "id": "style-tokens-v3420",
+   "retired_in": "3.42.0",
+   "date": "2026-08-01",
+   "retired_contract": "Published article HTML carries the literal class '{slug}-pillar' (and the legacy component names), so publish-time verification can grep the live page for it.",
+   "current_contract": "For any project with brand/style-tokens.json (all 13 today), wp_publisher._apply_project_styling rewrites body + CSS at the publish boundary into per-project HMAC tokens: project-charlie-pillar ships as mwxiod-1ymm61. Internal artifacts (draft.md, lints) keep the legacy names. Published names must be RESOLVED, never hand-written.",
+   "cure": "Resolve the published name with `python -m scripts._core.style_tokens --show {slug}`, or let verify_post.py do it. Verifying live HTML for a literal '{slug}-pillar' on a tokenized project is a check that can never pass.",
+   "pattern": "class\\s*=\\s*[\"'\\\\]*[a-z0-9_-]*-pillar|\\.[a-z][a-z0-9_]*-pillar\\b|\\{slug\\}-pillar",
+   "requires": "style_tokens|style-tokens",
+   "note_on_pattern": "Generalized 2026-08-12. It used to be the two literal spellings '{slug}-pillar|project-charlie-pillar', so twelve of thirteen real project wrappers (project-echo-pillar, project-foxtrot-pillar, project-alpha-pillar, ...) did not match and the one rule this executor was built for could not fire. The generalization is anchored on CSS-class USAGE (class=\"x-pillar\", .x-pillar) rather than 'any hyphenated word ending in -pillar', because 'local-state-pillar' is a FORMAT ID and 'has-pillar' / 'no-pillar' / 'spoke-pillar' / 'design-system-pillars' / 'system-pillar' are ordinary prose in this tree. A naive widening flags all of them, and per _how_to_add a lint that fires on correct usage gets muted — worse than no lint. The slug sub-pattern is [a-z][a-z0-9_]* (no hyphen) after a leading dot, which is precise for all 13 single-token project slugs; a hyphenated slug would need it revisited. tests/test_contract_fanout_scope_and_pattern.py pins both the matches and the non-matches against this exact regex."
+  },
+  {
+   "id": "rankmath-updatemeta-route",
+   "retired_in": "3.x",
+   "date": "2026-05-20",
+   "retired_contract": "SEO meta is written via POST /xuanran/v1/rank-math-bridge or POST /rankmath/v1/updateMeta.",
+   "current_contract": "SEO meta goes through POST /wp/v2/posts/{id} with a `meta` body; the MU-plugin registers the rank_math_* keys with a REST schema. The old bridge route 404s on POST, and updateMeta corrupts rank_math_schema_jsonld so the front-end 500s on render.",
+   "cure": "Use POST /wp/v2/posts/{id} with {\"meta\": {\"rank_math_*\": ...}}. Append custom schema to the post body as inline JSON-LD instead of sending it through updateMeta.",
+   "pattern": "rankmath/v1/updateMeta|POST[^\n]{0,40}xuanran/v1/rank-math-bridge",
+   "requires": "wp/v2/(posts|\\{type\\}|\\{post_type\\})",
+   "note_on_scope": "Only POST was retired. GET /xuanran/v1/rank-math-bridge survives and is the canonical bridge_version probe, so the pattern must not match a bare mention of the route.",
+   "note_on_requires": "Broadened 2026-08-12, when the widened scope first reached projects/**. projects/project-alpha/CLAUDE.md states the CURRENT contract correctly — `POST /wp/v2/{type}/{id}` with a meta body, naming updateMeta only to forbid it — but the requires regex demanded the literal 'wp/v2/posts' and flagged it. The endpoint is generic across post types, so the acknowledgement is written generically too; a requires regex that only accepts one spelling of the new contract fires on files that already comply, which is how a lint earns being muted."
+  },
+  {
+   "id": "cta-placement-end-v3415",
+   "retired_in": "3.41.5",
+   "date": "2026-07-21",
+   "retired_contract": "CTA and product modules may be placed at the END of the article body.",
+   "current_contract": "Placement is MID fleet-wide; 'end' is used by nothing, and repairing a legacy article means moving end -> mid first.",
+   "cure": "Use the mid placement. If you find an 'end' placement in a live post, move it before doing anything else to that article.",
+   "pattern": "placement\\s*[:=]\\s*[\"']end[\"']",
+   "requires": "mid"
+  },
+  {
+   "id": "image-count-default-v34217",
+   "retired_in": "3.42.17",
+   "date": "2026-08-17",
+   "retired_contract": "Articles get 4 images (1 cover + 3 inline), spelled as literals: 'design 4 image prompts', 'all 4 article images', '1 cover + 3 inline', per-format slot lists ending at Section 3, and a schema/CLI cap of 4.",
+   "current_contract": "scripts/_core/image_policy.py owns DEFAULT_IMAGE_COUNT=6 (1 cover + 5 inline) and MAX_IMAGE_COUNT=8; dispatch prompts are {image_count}/{inline_image_count}-parameterized; outline.schema.json caps at MAX_IMAGE_COUNT; cost rows and the CLI defer to the policy/format row.",
+   "cure": "Never spell an image count as a literal in an instruction layer — reference brief.image_count / scripts/_core/image_policy.py, or use the dispatch placeholders. tests/test_image_count_policy.py pins schema+prompt+cost-row wiring.",
+   "pattern": "design [0-9] image prompts|[Aa]ll 4 (article )?images|cover \\+ 3 inline|Images: 4 ×|1 cover \\+ 3\b",
+   "requires": "image_policy|image-policy|image_count",
+   "note_on_pattern": "Registered 2026-08-17 during the v3.42.18 audit: the v3.42.17 commit changed the contract WITHOUT registering it, so contract_fanout_check was structurally blind to nine live-layer leftovers (incl. an outline.schema.json cap that hard-BLOCKED the new default at the validate hook). Registration in the same commit as the change is the rule this entry exists to demonstrate."
+  },
+  {
+   "id": "geo-audit-verdict-v34218",
+   "retired_in": "3.42.18",
+   "date": "2026-08-17",
+   "retired_contract": "geo-audit.json carries a 'verdict' field ('pass | conditional | fail | blocked') that downstream stages read as a gate.",
+   "current_contract": "No live reader exists and none should: the quality-gates stage re-runs both scorers on the POST-edit draft and quality.json::passed is the enforced verdict (Rule 12 — gating on the stale pre-edit duplicate would recreate twin-gate drift). geo-audit.json's mandated core is _generated_by / cite_score / core_eeat_score / vetoes_triggered[] / cap_decision / edits_applied[]; no verdict, no fabricated audit_at.",
+   "cure": "Read quality.json::passed (and combined_verdict) for the binding outcome. If a layer mentions geo-audit verdicts it must point to quality.json as the enforced fact.",
+   "pattern": "geo-audit\\.json[^\n]{0,30}verdict|pass \\| conditional \\| fail \\| blocked",
+   "requires": "quality\\.json",
+   "note_on_pattern": "Anchored on the geo enum incl. 'blocked' so the parked seo-auditor tombstone's 3-value enum does not match. The 2026-08-17 batch audit found task 2 riding through on verdict='conditional' that no reader ever saw."
+  }
+ ]
 }

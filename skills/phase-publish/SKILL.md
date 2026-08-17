@@ -53,7 +53,7 @@ Stage 27e: image-post-processor    (~10 sec, no LLM)
   EXIF strip + WebP convert + srcset 3 sizes + compress <200KB + SEO filename
   Generate ImageObject schema fragment
 
-Stage 27f: image-curator            (~10 sec, LLM)
+Stage 27f: image-curator            (REFERENCE-ONLY — no Stage() dispatches agents/image-curator.md; alt/caption polish happens in the scripted image pipeline + wp_publisher media fields)
   Polish alt text per image (≤125 chars, keyword-natural)
   Generate optional captions
   Replace [IMAGE-SLOT-N] placeholders in draft.md

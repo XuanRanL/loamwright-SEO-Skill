@@ -147,7 +147,6 @@ agents actually load).
 {
   "_generated_by": "geo-auditor-subagent",
   "task_id": "abc123",
-  "audit_at": "2026-05-19T...",
   "ymyl_flag": false,
   "core_eeat_score": 67,
   "core_eeat_max": 80,
@@ -174,23 +173,35 @@ agents actually load).
     "T05_ymyl_author_eeat": false,
     "T09_deprecated_schema": false
   },
-  "cap_applied": false,
-  "cap_reason": null,
+  "vetoes_triggered": [],
+  "cap_decision": "no_cap",
   "raw_score": 82,
   "final_score": 82,
-  "verdict": "pass | conditional | fail | blocked",
   "recommendations": [...]
 }
 ```
 
-### Step 7: Pass/fail logic
+**Field-name contract (2026-08-17):** the orchestrator dispatch_prompt and this
+template name the SAME mandated core — `_generated_by`, `cite_score`,
+`core_eeat_score`, `vetoes_triggered[]`, `cap_decision`, `edits_applied[]` —
+extra detail fields are welcome but never replacements for these. Do NOT emit
+`verdict` (nothing reads it — the 2026-08-17 audit found a task riding through
+on a "conditional" no reader ever saw) and do NOT emit `audit_at` (you have no
+clock; fabricated timestamps corrupt forensics). The ENFORCED verdict for this
+pipeline is `quality.json :: passed` — the quality-gates stage re-runs BOTH
+scorers on the post-edit draft, so this artifact is advisory pre-edit evidence
+by construction.
 
-| Final score + vetoes | Verdict | Next action |
-|---|---|---|
-| ≥85, no vetoes | pass | → editor-in-chief (Gate 3) |
-| 75-84, no vetoes | conditional | → editor-in-chief reviews |
-| 60-74, no vetoes | fail | → repair-orchestrator level 2 |
-| Any veto + cap | blocked | → repair-orchestrator level 3 (must fix root cause) |
+### Step 7: Next-action logic
+
+(Advisory — the binding pass/fail is quality.json from the quality-gates stage.)
+
+| Final score + vetoes | Next action |
+|---|---|
+| ≥85, no vetoes | proceed (quality-gates re-scores post-edit) |
+| 75-84, no vetoes | proceed; expect reviewer scrutiny |
+| 60-74, no vetoes | → repair-orchestrator level 2 |
+| Any veto + cap | → repair-orchestrator level 3 (must fix root cause) |
 
 ## What this agent does NOT do
 
@@ -241,6 +252,7 @@ agents actually load).
    lift Experience/O-dimension scores — that trades a scoring point for a T04 veto.
 8. **NEVER edit or remove an injected CTA module block** (`### Your next step`-class
    H3 + its paragraph — config-authored, machine-verified by the cta_module gate).
+   The AUTHORITATIVE machine-owned headings for THIS draft are `memory/workspace/{task}/cta-draft.json :: blocks[*].heading` — READ that file before touching any H3 you did not write; the example headings are illustrative, NOT exhaustive (the 38418 duplicate shipped precisely because a registered heading, "One more thing", matched no example).
 9. **NEVER add FAQ questions that are not VERBATIM from research.json :: paa[]**
    (v3.35.1). Your Q&A technique runs BEFORE the paa-alignment-check gate, which
    requires >= min(ceil(0.6×faq_count), paa_count) of the draft's FAQ questions to

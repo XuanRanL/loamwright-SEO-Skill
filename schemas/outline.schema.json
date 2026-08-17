@@ -120,7 +120,7 @@
       "minimum": 2,
       "description": "≥2 tables required, at least 1 in front 50%"
     },
-    "expected_image_count": {"type": "integer", "minimum": 0, "maximum": 4},
+    "expected_image_count": {"type": "integer", "minimum": 0, "maximum": 8},
     "generated_at": {"type": "string", "format": "date-time"}
   }
 }

@@ -12,9 +12,8 @@ model: claude-opus-4-7
 > recorded in the 2026-06-30 visual-design spec).** No `Stage()` in
 > `scripts/pipeline/orchestrator.py` dispatches this agent, and no skill issues
 > a qualified dispatch — the only repo references are a `## See also` line in
-> `subskills/cross-cutting/repair-orchestrator/SKILL.md` and a cost row in
-> `scripts/_core/cost_estimator.py` (stale; remove when that file is next
-> touched — it bills a never-run stage into every `/cost` pre-flight).
+> `subskills/cross-cutting/repair-orchestrator/SKILL.md` (the stale cost row in
+> `scripts/_core/cost_estimator.py` was removed 2026-08-17 in v3.42.16).
 > **Decision (operator, 2026-08-12): tombstone, not wire.** The role split:
 > fresh-editor 0-100 E-E-A-T review → `agents/reviewer.md` (`independent-reviewer`
 > stage, Quality Gate 4); fix routing with an escalation cap →

@@ -133,9 +133,14 @@ The "Further Reading" prose paragraph is OPTIONAL. The "References" `<ol>` block
 6. **citation_capsule_required: true** on every content section (excludes Abstract / ToC / References)
 7. **image_slot: true** on exactly `state.brief.image_count − 1` sections (the cover is
    NOT an inline slot: `image_count` counts cover + inline images, so `image_count: 6`
-   means exactly **3** sections carry `image_slot: true`). Clarified 2026-07-06 after the
-   old wording ("exactly image_count sections … cover doesn't count") read two ways and
-   produced a 4-boolean outline for a 4-image article that had to be hand-corrected.
+   means exactly **5** sections carry `image_slot: true`). When the brief OMITS
+   `image_count` (batch briefs are told to), the count is NOT a guess: it resolves to
+   the default **6** via `scripts/_core/image_policy.py` — the dispatch prompt hands you
+   the resolved number. Clarified 2026-07-06 after the old wording ("exactly image_count
+   sections … cover doesn't count") read two ways and produced a 4-boolean outline for a
+   4-image article that had to be hand-corrected; the worked example above was itself
+   half-updated on 2026-08-17 (said 6 → **3**), proving the arithmetic must be spelled
+   once, not per-layer.
 8. **Featured Snippet target sections**: if `research.serp_features` contains `featured_snippet` OR `ai_overview`, mark 1-2 H2s with `is_featured_snippet_target: true` — consumed (v3.35) by the citation-capsule-builder stage, which gives those sections the most answer-first extractive capsule (FS and AIO select the same shape; the standalone featured-snippet-optimizer is retired). Do NOT emit `snippet_format` (deprecated orphan field).
 9. **image slot kinds — decided in image-prompts.json, not here (contract updated
    2026-07-06 to match the executors)**: the per-section `image_slot: true` booleans in

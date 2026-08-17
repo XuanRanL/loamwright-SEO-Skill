@@ -39,7 +39,8 @@ class IndexNowResult:
     error: str | None = None
 
 
-def submit(urls: list[str], *, retry: int = 2, timeout: float = 10.0) -> IndexNowResult:
+def submit(urls: list[str], *, project_slug: str | None = None,
+           retry: int = 2, timeout: float = 10.0) -> IndexNowResult:
     """Submit a batch of URLs to IndexNow.
 
     Per docs:
@@ -68,13 +69,26 @@ def submit(urls: list[str], *, retry: int = 2, timeout: float = 10.0) -> IndexNo
     if not safe_urls:
         return IndexNowResult([], 0, False, 0, error="All URLs SSRF-rejected")
 
-    # Load credentials
+    # Load credentials (per-project file wins on a multi-site fleet)
     try:
-        creds = credential_hub.get_bing_indexnow()
+        creds = credential_hub.get_bing_indexnow(project_slug)
     except credential_hub.CredentialNotFoundError as e:
         return IndexNowResult([], 0, False, 0, error=str(e))
     except credential_hub.CredentialFormatError as e:
         return IndexNowResult([], 0, False, 0, error=str(e))
+
+    # Wrong-credential guard (2026-08-17): a host-mismatched submission is a
+    # guaranteed 422 — fail loud and actionable BEFORE the network call instead
+    # of letting the API refuse it opaquely.
+    from urllib.parse import urlparse
+    cred_host = (creds.host or "").lower().removeprefix("www.")
+    for u in safe_urls:
+        uh = ((urlparse(u).hostname or "").lower()).removeprefix("www.")
+        if not (uh == cred_host or uh.endswith("." + cred_host)):
+            return IndexNowResult([], 0, False, 0, error=(
+                f"IndexNow credential is for host '{creds.host}' but URL host is "
+                f"'{uh}' — this submission would 422. Configure "
+                f"credentials/bing-indexnow/{project_slug or '{slug}'}.json for this site."))
 
     payload = {
         "host": creds.host,
@@ -118,6 +132,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Submit URL(s) to Bing IndexNow")
     ap.add_argument("urls", nargs="*")
     ap.add_argument("--from-file", type=Path, help="File with URLs (one per line)")
+    ap.add_argument("--project-slug", default=None, help="Resolve per-site credentials/bing-indexnow/{slug}.json")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -131,7 +146,7 @@ def main() -> int:
         print("No URLs to submit", file=sys.stderr)
         return 2
 
-    result = submit(urls)
+    result = submit(urls, project_slug=args.project_slug)
 
     if args.json:
         print(json.dumps(asdict(result), indent=2, ensure_ascii=False))
